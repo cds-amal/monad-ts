@@ -1,3 +1,6 @@
+/* Import MetaMask Design Tokens CSS Variables */
+@import '../node_modules/@metamask/design-tokens/dist/styles.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

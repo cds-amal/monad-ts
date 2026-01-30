@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Box, Text, BoxBackgroundColor, BoxAlignItems, BoxJustifyContent, TextVariant, TextColor } from '@metamask/design-system-react'
 import { useWallet } from './hooks/useWallet'
 import { WalletButton } from './components/WalletButton'
 import { TokenList } from './components/TokenList'
@@ -10,55 +11,6 @@ export default function App() {
   const { wallet, tokens, loading, connect, disconnect, refreshTokens } = useWallet()
   const [selectedToken, setSelectedToken] = useState<Token | null>(null)
   const [transferResult, setTransferResult] = useState<TransferResult | null>(null)
-
-  const appStyle: React.CSSProperties = {
-    minHeight: '100vh',
-    backgroundColor: '#f3f4f6',
-    padding: '40px 20px',
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-  }
-
-  const containerStyle: React.CSSProperties = {
-    maxWidth: '480px',
-    margin: '0 auto',
-  }
-
-  const headerStyle: React.CSSProperties = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '32px',
-  }
-
-  const titleStyle: React.CSSProperties = {
-    fontSize: '24px',
-    fontWeight: 700,
-    color: '#111827',
-    margin: 0,
-  }
-
-  const cardStyle: React.CSSProperties = {
-    backgroundColor: 'white',
-    borderRadius: '16px',
-    padding: '24px',
-    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-  }
-
-  const sectionStyle: React.CSSProperties = {
-    marginBottom: '24px',
-  }
-
-  const dividerStyle: React.CSSProperties = {
-    height: '1px',
-    backgroundColor: '#e5e7eb',
-    margin: '24px 0',
-  }
-
-  const emptyStateStyle: React.CSSProperties = {
-    textAlign: 'center',
-    padding: '48px 24px',
-    color: '#6b7280',
-  }
 
   const handleTransferComplete = (result: TransferResult) => {
     setTransferResult(result)
@@ -72,43 +24,63 @@ export default function App() {
   }
 
   return (
-    <div style={appStyle}>
-      <div style={containerStyle}>
-        <header style={headerStyle}>
-          <h1 style={titleStyle}>Token Transfer</h1>
+    <Box
+      className="min-h-screen"
+      backgroundColor={BoxBackgroundColor.BackgroundAlternative}
+      paddingVertical={10}
+      paddingHorizontal={5}
+    >
+      <Box className="max-w-lg mx-auto">
+        <Box
+          className="flex"
+          justifyContent={BoxJustifyContent.Between}
+          alignItems={BoxAlignItems.Center}
+          marginBottom={8}
+        >
+          <h1>
+            <Text variant={TextVariant.HeadingLg}>
+              Token Transfer
+            </Text>
+          </h1>
           <WalletButton
             wallet={wallet}
             loading={loading}
             onConnect={connect}
             onDisconnect={disconnect}
           />
-        </header>
+        </Box>
 
-        <div style={cardStyle}>
+        <Box
+          backgroundColor={BoxBackgroundColor.BackgroundDefault}
+          className="rounded-2xl shadow-md"
+          padding={6}
+        >
           {!wallet ? (
-            <div style={emptyStateStyle}>
-              Connect your wallet to start transferring tokens
-            </div>
+            <Box className="text-center" paddingVertical={12} paddingHorizontal={6}>
+              <Text variant={TextVariant.BodyMd} color={TextColor.TextMuted}>
+                Connect your wallet to start transferring tokens
+              </Text>
+            </Box>
           ) : (
             <>
               {transferResult && (
-                <div style={sectionStyle}>
+                <Box marginBottom={6}>
                   <TransferStatus
                     result={transferResult}
                     onDismiss={() => setTransferResult(null)}
                   />
-                </div>
+                </Box>
               )}
 
-              <div style={sectionStyle}>
+              <Box marginBottom={6}>
                 <TokenList
                   tokens={tokens}
                   selectedToken={selectedToken}
                   onSelectToken={setSelectedToken}
                 />
-              </div>
+              </Box>
 
-              <div style={dividerStyle} />
+              <Box className="h-px bg-border-muted" marginVertical={6} />
 
               <TransferForm
                 token={selectedToken}
@@ -116,8 +88,8 @@ export default function App() {
               />
             </>
           )}
-        </div>
-      </div>
-    </div>
+        </Box>
+      </Box>
+    </Box>
   )
 }

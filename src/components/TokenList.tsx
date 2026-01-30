@@ -1,3 +1,4 @@
+import { Box, Text, TextVariant, TextColor, FontWeight, BoxJustifyContent, BoxAlignItems, BoxBackgroundColor, BoxBorderColor } from '@metamask/design-system-react'
 import { Token } from '../types'
 
 interface TokenListProps {
@@ -7,70 +8,39 @@ interface TokenListProps {
 }
 
 export function TokenList({ tokens, selectedToken, onSelectToken }: TokenListProps) {
-  const containerStyle: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px',
-  }
-
-  const labelStyle: React.CSSProperties = {
-    fontSize: '14px',
-    fontWeight: 600,
-    color: '#374151',
-    marginBottom: '4px',
-  }
-
-  const getTokenStyle = (token: Token): React.CSSProperties => ({
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '16px',
-    backgroundColor: selectedToken?.symbol === token.symbol ? '#dbeafe' : '#f9fafb',
-    border: selectedToken?.symbol === token.symbol ? '2px solid #3b82f6' : '2px solid transparent',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-  })
-
-  const tokenInfoStyle: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '4px',
-  }
-
-  const tokenSymbolStyle: React.CSSProperties = {
-    fontSize: '16px',
-    fontWeight: 600,
-    color: '#111827',
-  }
-
-  const tokenNameStyle: React.CSSProperties = {
-    fontSize: '12px',
-    color: '#6b7280',
-  }
-
-  const balanceStyle: React.CSSProperties = {
-    fontSize: '16px',
-    fontWeight: 500,
-    color: '#111827',
-  }
-
   return (
-    <div style={containerStyle}>
-      <span style={labelStyle}>Select Token</span>
-      {tokens.map(token => (
-        <div
-          key={token.symbol}
-          style={getTokenStyle(token)}
-          onClick={() => onSelectToken(token)}
-        >
-          <div style={tokenInfoStyle}>
-            <span style={tokenSymbolStyle}>{token.symbol}</span>
-            <span style={tokenNameStyle}>{token.name}</span>
-          </div>
-          <span style={balanceStyle}>{token.balance}</span>
-        </div>
-      ))}
-    </div>
+    <Box className="flex flex-col" gap={2}>
+      <Text variant={TextVariant.BodyMd} fontWeight={FontWeight.Medium} color={TextColor.TextDefault}>
+        Select Token
+      </Text>
+      {tokens.map(token => {
+        const isSelected = selectedToken?.symbol === token.symbol
+        return (
+          <Box
+            key={token.symbol}
+            className="flex rounded-lg cursor-pointer transition-all hover:shadow-sm"
+            justifyContent={BoxJustifyContent.Between}
+            alignItems={BoxAlignItems.Center}
+            padding={4}
+            backgroundColor={isSelected ? BoxBackgroundColor.PrimaryMuted : BoxBackgroundColor.BackgroundSection}
+            borderWidth={2}
+            borderColor={isSelected ? BoxBorderColor.PrimaryDefault : BoxBorderColor.Transparent}
+            onClick={() => onSelectToken(token)}
+          >
+            <Box className="flex flex-col" gap={1}>
+              <Text variant={TextVariant.BodyMd} fontWeight={FontWeight.Medium}>
+                {token.symbol}
+              </Text>
+              <Text variant={TextVariant.BodyXs} color={TextColor.TextMuted}>
+                {token.name}
+              </Text>
+            </Box>
+            <Text variant={TextVariant.BodyMd} fontWeight={FontWeight.Medium}>
+              {token.balance}
+            </Text>
+          </Box>
+        )
+      })}
+    </Box>
   )
 }
