@@ -4,7 +4,7 @@ export default {
   content: [
     './index.html',
     './src/**/*.{js,ts,jsx,tsx}',
-    './node_modules/@metamask/design-system-react/dist/**/*.js',
+    './node_modules/@metamask/design-system-react/dist/**/*.{js,mjs,cjs}',
   ],
   theme: {
     extend: {
