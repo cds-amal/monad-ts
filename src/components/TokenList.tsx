@@ -1,4 +1,6 @@
-import { Token } from '../types'
+import { useStyle } from '../context'
+import { Box, VStack, Flex } from '../adapters/browser'
+import { Token } from '../ports'
 
 interface TokenListProps {
   tokens: Token[]
@@ -7,70 +9,34 @@ interface TokenListProps {
 }
 
 export function TokenList({ tokens, selectedToken, onSelectToken }: TokenListProps) {
-  const containerStyle: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px',
-  }
-
-  const labelStyle: React.CSSProperties = {
-    fontSize: '14px',
-    fontWeight: 600,
-    color: '#374151',
-    marginBottom: '4px',
-  }
-
-  const getTokenStyle = (token: Token): React.CSSProperties => ({
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '16px',
-    backgroundColor: selectedToken?.symbol === token.symbol ? '#dbeafe' : '#f9fafb',
-    border: selectedToken?.symbol === token.symbol ? '2px solid #3b82f6' : '2px solid transparent',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-  })
-
-  const tokenInfoStyle: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '4px',
-  }
-
-  const tokenSymbolStyle: React.CSSProperties = {
-    fontSize: '16px',
-    fontWeight: 600,
-    color: '#111827',
-  }
-
-  const tokenNameStyle: React.CSSProperties = {
-    fontSize: '12px',
-    color: '#6b7280',
-  }
-
-  const balanceStyle: React.CSSProperties = {
-    fontSize: '16px',
-    fontWeight: 500,
-    color: '#111827',
-  }
+  const style = useStyle()
 
   return (
-    <div style={containerStyle}>
-      <span style={labelStyle}>Select Token</span>
+    <VStack gap={2}>
+      <Box as="span" styles={style.label()}>
+        Select Token
+      </Box>
       {tokens.map(token => (
-        <div
+        <Flex
           key={token.symbol}
-          style={getTokenStyle(token)}
+          justify="between"
+          align="center"
+          styles={style.selectable({ selected: selectedToken?.symbol === token.symbol })}
           onClick={() => onSelectToken(token)}
         >
-          <div style={tokenInfoStyle}>
-            <span style={tokenSymbolStyle}>{token.symbol}</span>
-            <span style={tokenNameStyle}>{token.name}</span>
-          </div>
-          <span style={balanceStyle}>{token.balance}</span>
-        </div>
+          <VStack gap={1}>
+            <Box as="span" styles={{ fontSize: '16px', fontWeight: 600, color: '#111827' }}>
+              {token.symbol}
+            </Box>
+            <Box as="span" styles={{ fontSize: '12px', color: '#6b7280' }}>
+              {token.name}
+            </Box>
+          </VStack>
+          <Box as="span" styles={{ fontSize: '16px', fontWeight: 500, color: '#111827' }}>
+            {token.balance}
+          </Box>
+        </Flex>
       ))}
-    </div>
+    </VStack>
   )
 }

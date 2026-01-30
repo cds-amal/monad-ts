@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { Token, TransferResult } from '../types'
-import { web3Service } from '../services/mockWeb3'
+import { useStyle, useWeb3 } from '../context'
+import { Box, VStack, Flex, InputField } from '../adapters/browser'
+import { getAccountByAddress } from '../adapters/browser'
 import { AddressSelect } from './AddressSelect'
-import { validateAddress, getAccountByAddress } from '../services/mockAccounts'
+import { Token, TransferResult } from '../ports'
 
 interface TransferFormProps {
   token: Token | null
@@ -10,85 +11,20 @@ interface TransferFormProps {
 }
 
 export function TransferForm({ token, onTransferComplete }: TransferFormProps) {
+  const style = useStyle()
+  const web3 = useWeb3()
+
   const [recipient, setRecipient] = useState('')
   const [amount, setAmount] = useState('')
   const [loading, setLoading] = useState(false)
 
   const selectedAccount = getAccountByAddress(recipient)
-  const validation = recipient ? validateAddress(recipient) : null
+  const validation = recipient ? web3.validateAddress(recipient) : null
   const isContractWarning = validation?.valid && validation.accountType === 'contract'
 
-  const containerStyle: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '16px',
-  }
-
-  const inputGroupStyle: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '6px',
-  }
-
-  const labelStyle: React.CSSProperties = {
-    fontSize: '14px',
-    fontWeight: 600,
-    color: '#374151',
-  }
-
-  const inputStyle: React.CSSProperties = {
-    padding: '12px 16px',
-    fontSize: '16px',
-    border: '2px solid #e5e7eb',
-    borderRadius: '8px',
-    outline: 'none',
-    transition: 'border-color 0.2s ease',
-  }
-
-  const buttonStyle: React.CSSProperties = {
-    padding: '16px 24px',
-    fontSize: '16px',
-    fontWeight: 600,
-    border: 'none',
-    borderRadius: '8px',
-    cursor: !token || loading ? 'not-allowed' : 'pointer',
-    backgroundColor: !token || loading ? '#9ca3af' : '#10b981',
-    color: 'white',
-    marginTop: '8px',
-    transition: 'all 0.2s ease',
-  }
-
-  const maxButtonStyle: React.CSSProperties = {
-    padding: '4px 8px',
-    fontSize: '12px',
-    fontWeight: 600,
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    backgroundColor: '#e5e7eb',
-    color: '#374151',
-  }
-
-  const amountHeaderStyle: React.CSSProperties = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  }
-
-  const warningStyle: React.CSSProperties = {
-    padding: '8px 12px',
-    fontSize: '12px',
-    backgroundColor: '#dbeafe',
-    color: '#1e40af',
-    borderRadius: '6px',
-    border: '1px solid #3b82f6',
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async () => {
     if (!token) return
 
-    // Check validation before submitting
     if (validation && !validation.valid) {
       onTransferComplete({ success: false, error: validation.error })
       return
@@ -96,11 +32,7 @@ export function TransferForm({ token, onTransferComplete }: TransferFormProps) {
 
     setLoading(true)
     try {
-      const result = await web3Service.transfer({
-        to: recipient,
-        amount,
-        token,
-      })
+      const result = await web3.transfer({ to: recipient, amount, token })
       onTransferComplete(result)
       if (result.success) {
         setRecipient('')
@@ -117,43 +49,66 @@ export function TransferForm({ token, onTransferComplete }: TransferFormProps) {
     }
   }
 
+  const isDisabled = !token || loading
+
   return (
-    <form style={containerStyle} onSubmit={handleSubmit}>
-      <div style={inputGroupStyle}>
-        <label style={labelStyle}>Recipient Address</label>
-        <AddressSelect
-          value={recipient}
-          onChange={setRecipient}
-          disabled={!token || loading}
-        />
-        {isContractWarning && selectedAccount && (
-          <div style={warningStyle}>
-            ⚠️ This is a contract address ({selectedAccount.label}). Make sure the contract can receive tokens.
-          </div>
-        )}
-      </div>
-      <div style={inputGroupStyle}>
-        <div style={amountHeaderStyle}>
-          <label style={labelStyle}>Amount {token && `(${token.symbol})`}</label>
-          {token && (
-            <button type="button" style={maxButtonStyle} onClick={handleMaxClick}>
-              MAX
-            </button>
+    <VStack gap={4}>
+        {/* Recipient */}
+        <VStack gap={2}>
+          <Box as="label" styles={style.label()}>
+            Recipient Address
+          </Box>
+          <AddressSelect
+            value={recipient}
+            onChange={setRecipient}
+            disabled={isDisabled}
+          />
+          {isContractWarning && selectedAccount && (
+            <Box styles={style.alert({ intent: 'primary' })}>
+              ⚠️ This is a contract address ({selectedAccount.label}). Make sure the contract can receive tokens.
+            </Box>
           )}
-        </div>
-        <input
-          style={inputStyle}
-          type="number"
-          step="any"
-          placeholder="0.00"
-          value={amount}
-          onChange={e => setAmount(e.target.value)}
-          disabled={!token || loading}
-        />
-      </div>
-      <button style={buttonStyle} type="submit" disabled={!token || loading}>
-        {loading ? 'Sending...' : `Send ${token?.symbol || 'Tokens'}`}
-      </button>
-    </form>
+        </VStack>
+
+        {/* Amount */}
+        <VStack gap={2}>
+          <Flex justify="between" align="center">
+            <Box as="label" styles={style.label()}>
+              Amount {token && `(${token.symbol})`}
+            </Box>
+            {token && (
+              <Box
+                as="button"
+                styles={style.badge({ intent: 'neutral', size: 'sm' })}
+                onClick={handleMaxClick}
+              >
+                MAX
+              </Box>
+            )}
+          </Flex>
+          <InputField
+            type="number"
+            value={amount}
+            placeholder="0.00"
+            disabled={isDisabled}
+            styles={style.input({ disabled: isDisabled })}
+            onChange={setAmount}
+          />
+        </VStack>
+
+        {/* Submit */}
+        <Box
+          as="button"
+          styles={style.button({
+            intent: 'success',
+            size: 'lg',
+            disabled: isDisabled,
+            loading,
+          })}
+          onClick={handleSubmit}
+        >
+          {loading ? 'Sending...' : `Send ${token?.symbol || 'Tokens'}`}
+        </Box>
+    </VStack>
   )
 }
