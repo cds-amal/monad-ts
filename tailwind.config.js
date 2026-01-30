@@ -7,18 +7,9 @@ export default {
     './node_modules/@metamask/design-system-react/dist/**/*.js',
   ],
   theme: {
-    extend: {},
-    // Override default Tailwind colors to enforce using design system tokens
-    colors: {
-      inherit: 'inherit',
-      current: 'currentColor',
-      transparent: 'transparent',
-      black: '#000',
-      white: '#fff',
+    extend: {
+      // The preset will add design system colors, typography, and shadows
     },
-    // Override default Tailwind font sizes to enforce using design system Text component
-    fontSize: {},
-    fontWeight: {},
   },
   plugins: [],
 };
