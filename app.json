@@ -1,0 +1,23 @@
+{
+  "expo": {
+    "name": "Token Transfer",
+    "slug": "token-transfer-app",
+    "version": "0.0.1",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.example.tokentransfer"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#3b82f6"
+      },
+      "package": "com.example.tokentransfer"
+    },
+    "web": {
+      "bundler": "vite"
+    }
+  }
+}
