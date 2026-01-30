@@ -117,8 +117,69 @@ decorators: [
 
 ---
 
-### Task 2: [Next task]
-*To be completed*
+### Task 2: Add Dark Mode
+**Objective**: Implement light/dark theme toggle
+
+| Metric | Imperative | Monad |
+|--------|------------|-------|
+| Files changed | 10 | 14 |
+| Lines added | +224 | +504 |
+| Lines removed | -68 | -283 |
+| Net change | +156 | +221 |
+| Component files touched | 6 | 4 (3 for hardcoded colors) |
+| Architecture change | New context + hooks | Style adapter factory |
+
+**Imperative approach** (`imperative_02`):
+- Created `ThemeContext.tsx` with light/dark color mappings
+- Created `ThemeToggle.tsx` component
+- Updated 6 component files to replace hardcoded colors with `useColors()` hook:
+  - `App.tsx`
+  - `WalletButton.tsx`
+  - `TokenList.tsx`
+  - `TransferForm.tsx`
+  - `TransferStatus.tsx`
+  - `AddressSelect.tsx`
+
+```tsx
+// Before - hardcoded colors
+const buttonStyle = { backgroundColor: '#3b82f6', color: '#111827' }
+
+// After - color hook
+const c = useColors()
+const buttonStyle = { backgroundColor: c.primary, color: c.text }
+```
+
+**Monadic approach** (`monad_02`):
+- Added semantic color tokens (`SemanticColors`) with light/dark variants to `tokens.ts`
+- Converted `browserStyleAdapter` to factory function `createStyleAdapter(theme)`
+- Added `ThemeContext` to `AdapterContext.tsx`
+- Created `ThemeToggle.tsx` component
+- Updated 4 files for stray hardcoded colors (TokenList, TransferStatus, AddressSelect, App)
+
+```tsx
+// Adapter factory creates theme-aware styles
+const adapters = useMemo(() => ({
+  style: createStyleAdapter(theme),
+  web3: browserWeb3Adapter,
+}), [theme])
+
+// Components unchanged - still use semantic styles
+<Box styles={style.button({ intent: 'primary' })} />
+```
+
+**Key Observations**:
+
+1. **Initial investment pays off**: The monadic approach required more upfront work defining semantic color tokens, but components using `style.xxx()` methods needed no changes.
+
+2. **Stray hardcoded colors**: Both approaches had components with inline hardcoded colors that needed updates. This reveals a DX insight: consistency in using the style system is crucial.
+
+3. **Future-proofing**: Monad's adapter pattern allows adding new themes (high-contrast, colorblind-friendly) by only modifying `themeColors` - no component changes needed.
+
+4. **Storybook integration**: Added theme toolbar to both - monad's `AdapterProvider` accepts `initialTheme` prop, making theme testing seamless.
+
+5. **Lines of code**: Monad has more infrastructure (semantic tokens, factory pattern) but this is a one-time cost. Adding a third theme would require ~40 lines in monad vs potentially 100+ lines scattered across components in imperative.
+
+**Verdict**: For dark mode specifically, monad provides better DX for ongoing maintenance despite higher initial implementation cost.
 
 ---
 
@@ -147,10 +208,24 @@ git diff monad..monad_01 --stat
 1. **Setup**: Monad has higher initial cost but provides dependency injection out of the box
 2. **Stories**: Nearly identical DX for writing component stories
 3. **Testing**: Monad architecture naturally supports adapter mocking
+4. **Theme changes**: Monad excels at centralized style changes (dark mode required no component changes for properly abstracted styles)
+5. **Consistency matters**: Both approaches suffer when developers bypass the style system with hardcoded values
+
+### DX Trade-off Summary
+
+| Aspect | Imperative | Monad | Winner |
+|--------|------------|-------|--------|
+| Initial setup | Fast | Slower | Imperative |
+| Learning curve | Low | Medium | Imperative |
+| Adding features | Scattered changes | Localized changes | Monad |
+| Theme changes | Touch all components | Touch adapter only | Monad |
+| Testing/mocking | Manual setup | Built-in via DI | Monad |
+| Debugging | Direct inspection | Abstraction layers | Imperative |
+| Team scalability | Varies | Enforced patterns | Monad |
 
 ## Future Tasks
 
-- [ ] Dark mode implementation
+- [x] Dark mode implementation
 - [ ] Mobile responsive layout
 - [ ] Form validation feedback
 - [ ] Loading states
