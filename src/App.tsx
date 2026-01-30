@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Box, Text, BoxBackgroundColor, BoxAlignItems, BoxJustifyContent, TextVariant, TextColor } from '@metamask/design-system-react'
+import { Box, Text, Button, AvatarIcon, BoxBackgroundColor, BoxAlignItems, BoxJustifyContent, TextVariant, TextColor, ButtonVariant, ButtonBaseSize, IconName, AvatarBaseSize } from '@metamask/design-system-react'
 import { useWallet } from './hooks/useWallet'
 import { WalletButton } from './components/WalletButton'
 import { TokenList } from './components/TokenList'
@@ -37,11 +37,9 @@ export default function App() {
           alignItems={BoxAlignItems.Center}
           marginBottom={8}
         >
-          <h1>
-            <Text variant={TextVariant.HeadingLg}>
-              Token Transfer
-            </Text>
-          </h1>
+          <Text variant={TextVariant.HeadingLg} asChild>
+            <h1>Token Transfer</h1>
+          </Text>
           <WalletButton
             wallet={wallet}
             loading={loading}
@@ -56,10 +54,39 @@ export default function App() {
           padding={6}
         >
           {!wallet ? (
-            <Box className="text-center" paddingVertical={12} paddingHorizontal={6}>
-              <Text variant={TextVariant.BodyMd} color={TextColor.TextMuted}>
-                Connect your wallet to start transferring tokens
-              </Text>
+            <Box
+              className="flex flex-col items-center text-center"
+              paddingVertical={12}
+              paddingHorizontal={6}
+              gap={4}
+              asChild
+            >
+              <section aria-labelledby="empty-state-heading">
+                <AvatarIcon
+                  iconName={IconName.Wallet}
+                  size={AvatarBaseSize.Xl}
+                />
+                <Box className="flex flex-col" gap={2} asChild>
+                  <div>
+                    <Text variant={TextVariant.HeadingMd} asChild>
+                      <h2 id="empty-state-heading">Connect Your Wallet</h2>
+                    </Text>
+                    <Text variant={TextVariant.BodyMd} color={TextColor.TextMuted} asChild>
+                      <p>Connect your wallet to start transferring tokens</p>
+                    </Text>
+                  </div>
+                </Box>
+                <Button
+                  variant={ButtonVariant.Primary}
+                  size={ButtonBaseSize.Lg}
+                  onClick={connect}
+                  isDisabled={loading}
+                  isLoading={loading}
+                  loadingText="Connecting"
+                >
+                  Connect Wallet
+                </Button>
+              </section>
             </Box>
           ) : (
             <>

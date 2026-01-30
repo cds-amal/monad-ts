@@ -56,11 +56,9 @@ export function TransferForm({ token, onTransferComplete }: TransferFormProps) {
     <form onSubmit={handleSubmit}>
       <Box className="flex flex-col" gap={4}>
         <Box className="flex flex-col" gap={1}>
-          <label>
-            <Text variant={TextVariant.BodyMd} fontWeight={FontWeight.Medium}>
-              Recipient Address
-            </Text>
-          </label>
+          <Text variant={TextVariant.BodyMd} fontWeight={FontWeight.Medium} asChild>
+            <label htmlFor="recipient-address">Recipient Address</label>
+          </Text>
           <AddressSelect
             value={recipient}
             onChange={setRecipient}
@@ -84,11 +82,11 @@ export function TransferForm({ token, onTransferComplete }: TransferFormProps) {
 
         <Box className="flex flex-col" gap={1}>
           <Box className="flex" justifyContent={BoxJustifyContent.Between} alignItems={BoxAlignItems.Center}>
-            <label>
-              <Text variant={TextVariant.BodyMd} fontWeight={FontWeight.Medium}>
+            <Text variant={TextVariant.BodyMd} fontWeight={FontWeight.Medium} asChild>
+              <label htmlFor="amount-input">
                 Amount {token && `(${token.symbol})`}
-              </Text>
-            </label>
+              </label>
+            </Text>
             {token && (
               <button
                 type="button"
@@ -100,6 +98,7 @@ export function TransferForm({ token, onTransferComplete }: TransferFormProps) {
             )}
           </Box>
           <input
+            id="amount-input"
             className="p-3 text-base border-2 border-gray-200 rounded-lg outline-none transition-colors focus:border-primary-default disabled:bg-gray-100 disabled:cursor-not-allowed"
             type="number"
             step="any"
