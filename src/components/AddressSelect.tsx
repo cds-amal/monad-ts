@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { MOCK_ACCOUNTS, MockAccount, AccountType } from '../services/mockAccounts'
+import { useColors } from '../context/ThemeContext'
 
 interface AddressSelectProps {
   value: string
@@ -7,6 +8,7 @@ interface AddressSelectProps {
   disabled?: boolean
 }
 
+// Badge colors stay constant (semantic meaning)
 const TYPE_COLORS: Record<AccountType, { bg: string; text: string; border: string }> = {
   eoa: { bg: '#d1fae5', text: '#065f46', border: '#10b981' },
   contract: { bg: '#dbeafe', text: '#1e40af', border: '#3b82f6' },
@@ -24,6 +26,7 @@ const TYPE_LABELS: Record<AccountType, string> = {
 }
 
 export function AddressSelect({ value, onChange, disabled }: AddressSelectProps) {
+  const c = useColors()
   const [isOpen, setIsOpen] = useState(false)
 
   const selectedAccount = MOCK_ACCOUNTS.find(a => a.address === value)
@@ -36,9 +39,10 @@ export function AddressSelect({ value, onChange, disabled }: AddressSelectProps)
     width: '100%',
     padding: '12px 16px',
     fontSize: '14px',
-    border: '2px solid #e5e7eb',
+    border: `2px solid ${c.border}`,
     borderRadius: '8px',
-    backgroundColor: disabled ? '#f9fafb' : 'white',
+    backgroundColor: disabled ? c.bgDisabled : c.bgInput,
+    color: c.text,
     cursor: disabled ? 'not-allowed' : 'pointer',
     textAlign: 'left',
     display: 'flex',
@@ -52,10 +56,10 @@ export function AddressSelect({ value, onChange, disabled }: AddressSelectProps)
     left: 0,
     right: 0,
     marginTop: '4px',
-    backgroundColor: 'white',
-    border: '2px solid #e5e7eb',
+    backgroundColor: c.bgCard,
+    border: `2px solid ${c.border}`,
     borderRadius: '8px',
-    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)',
     zIndex: 50,
     maxHeight: '300px',
     overflowY: 'auto',
@@ -67,16 +71,17 @@ export function AddressSelect({ value, onChange, disabled }: AddressSelectProps)
     fontWeight: 700,
     textTransform: 'uppercase',
     letterSpacing: '0.05em',
-    color: '#6b7280',
-    backgroundColor: '#f9fafb',
-    borderBottom: '1px solid #e5e7eb',
+    color: c.textSecondary,
+    backgroundColor: c.bgHover,
+    borderBottom: `1px solid ${c.border}`,
   }
 
-  const getOptionStyle = (_account: MockAccount): React.CSSProperties => ({
+  const getOptionStyle = (): React.CSSProperties => ({
     padding: '10px 12px',
     cursor: 'pointer',
-    borderBottom: '1px solid #f3f4f6',
+    borderBottom: `1px solid ${c.border}`,
     transition: 'background-color 0.15s',
+    backgroundColor: c.bgCard,
   })
 
   const optionLabelStyle: React.CSSProperties = {
@@ -89,7 +94,7 @@ export function AddressSelect({ value, onChange, disabled }: AddressSelectProps)
   const addressStyle: React.CSSProperties = {
     fontFamily: 'monospace',
     fontSize: '12px',
-    color: '#6b7280',
+    color: c.textSecondary,
   }
 
   const getBadgeStyle = (type: AccountType): React.CSSProperties => ({
@@ -112,7 +117,6 @@ export function AddressSelect({ value, onChange, disabled }: AddressSelectProps)
     return `${addr.slice(0, 10)}...${addr.slice(-8)}`
   }
 
-  // Group accounts by type for organized display
   const groupedAccounts = MOCK_ACCOUNTS.reduce((acc, account) => {
     if (!acc[account.type]) acc[account.type] = []
     acc[account.type]!.push(account)
@@ -131,15 +135,15 @@ export function AddressSelect({ value, onChange, disabled }: AddressSelectProps)
       >
         {selectedAccount ? (
           <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontWeight: 500 }}>{selectedAccount.label}</span>
+            <span style={{ fontWeight: 500, color: c.text }}>{selectedAccount.label}</span>
             <span style={getBadgeStyle(selectedAccount.type)}>
               {TYPE_LABELS[selectedAccount.type]}
             </span>
           </span>
         ) : (
-          <span style={{ color: '#9ca3af' }}>Select recipient...</span>
+          <span style={{ color: c.textMuted }}>Select recipient...</span>
         )}
-        <span style={{ color: '#9ca3af' }}>{isOpen ? '▲' : '▼'}</span>
+        <span style={{ color: c.textMuted }}>{isOpen ? '▲' : '▼'}</span>
       </button>
 
       {isOpen && (
@@ -156,23 +160,23 @@ export function AddressSelect({ value, onChange, disabled }: AddressSelectProps)
                 {accounts.map(account => (
                   <div
                     key={account.address}
-                    style={getOptionStyle(account)}
+                    style={getOptionStyle()}
                     onClick={() => handleSelect(account)}
                     onMouseEnter={e => {
-                      e.currentTarget.style.backgroundColor = '#f3f4f6'
+                      e.currentTarget.style.backgroundColor = c.bgHover
                     }}
                     onMouseLeave={e => {
-                      e.currentTarget.style.backgroundColor = 'white'
+                      e.currentTarget.style.backgroundColor = c.bgCard
                     }}
                   >
                     <div style={optionLabelStyle}>
-                      <span style={{ fontWeight: 500 }}>{account.label}</span>
+                      <span style={{ fontWeight: 500, color: c.text }}>{account.label}</span>
                       <span style={getBadgeStyle(account.type)}>
                         {TYPE_LABELS[account.type]}
                       </span>
                     </div>
                     <div style={addressStyle}>{formatAddress(account.address)}</div>
-                    <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '2px' }}>
+                    <div style={{ fontSize: '11px', color: c.textMuted, marginTop: '2px' }}>
                       {account.description}
                     </div>
                   </div>

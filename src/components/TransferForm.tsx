@@ -3,6 +3,7 @@ import { Token, TransferResult } from '../types'
 import { web3Service } from '../services/mockWeb3'
 import { AddressSelect } from './AddressSelect'
 import { validateAddress, getAccountByAddress } from '../services/mockAccounts'
+import { useColors } from '../context/ThemeContext'
 
 interface TransferFormProps {
   token: Token | null
@@ -10,6 +11,7 @@ interface TransferFormProps {
 }
 
 export function TransferForm({ token, onTransferComplete }: TransferFormProps) {
+  const c = useColors()
   const [recipient, setRecipient] = useState('')
   const [amount, setAmount] = useState('')
   const [loading, setLoading] = useState(false)
@@ -33,16 +35,18 @@ export function TransferForm({ token, onTransferComplete }: TransferFormProps) {
   const labelStyle: React.CSSProperties = {
     fontSize: '14px',
     fontWeight: 600,
-    color: '#374151',
+    color: c.textSecondary,
   }
 
   const inputStyle: React.CSSProperties = {
     padding: '12px 16px',
     fontSize: '16px',
-    border: '2px solid #e5e7eb',
+    border: `2px solid ${c.border}`,
     borderRadius: '8px',
     outline: 'none',
     transition: 'border-color 0.2s ease',
+    backgroundColor: c.bgInput,
+    color: c.text,
   }
 
   const buttonStyle: React.CSSProperties = {
@@ -52,7 +56,7 @@ export function TransferForm({ token, onTransferComplete }: TransferFormProps) {
     border: 'none',
     borderRadius: '8px',
     cursor: !token || loading ? 'not-allowed' : 'pointer',
-    backgroundColor: !token || loading ? '#9ca3af' : '#10b981',
+    backgroundColor: !token || loading ? c.textMuted : c.success,
     color: 'white',
     marginTop: '8px',
     transition: 'all 0.2s ease',
@@ -65,8 +69,8 @@ export function TransferForm({ token, onTransferComplete }: TransferFormProps) {
     border: 'none',
     borderRadius: '4px',
     cursor: 'pointer',
-    backgroundColor: '#e5e7eb',
-    color: '#374151',
+    backgroundColor: c.bgHover,
+    color: c.textSecondary,
   }
 
   const amountHeaderStyle: React.CSSProperties = {
@@ -78,17 +82,16 @@ export function TransferForm({ token, onTransferComplete }: TransferFormProps) {
   const warningStyle: React.CSSProperties = {
     padding: '8px 12px',
     fontSize: '12px',
-    backgroundColor: '#dbeafe',
-    color: '#1e40af',
+    backgroundColor: c.warningBg,
+    color: c.warningText,
     borderRadius: '6px',
-    border: '1px solid #3b82f6',
+    border: `1px solid ${c.primary}`,
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!token) return
 
-    // Check validation before submitting
     if (validation && !validation.valid) {
       onTransferComplete({ success: false, error: validation.error })
       return

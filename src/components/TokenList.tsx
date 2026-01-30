@@ -1,4 +1,5 @@
 import { Token } from '../types'
+import { useColors } from '../context/ThemeContext'
 
 interface TokenListProps {
   tokens: Token[]
@@ -7,6 +8,8 @@ interface TokenListProps {
 }
 
 export function TokenList({ tokens, selectedToken, onSelectToken }: TokenListProps) {
+  const c = useColors()
+
   const containerStyle: React.CSSProperties = {
     display: 'flex',
     flexDirection: 'column',
@@ -16,7 +19,7 @@ export function TokenList({ tokens, selectedToken, onSelectToken }: TokenListPro
   const labelStyle: React.CSSProperties = {
     fontSize: '14px',
     fontWeight: 600,
-    color: '#374151',
+    color: c.textSecondary,
     marginBottom: '4px',
   }
 
@@ -25,8 +28,8 @@ export function TokenList({ tokens, selectedToken, onSelectToken }: TokenListPro
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: '16px',
-    backgroundColor: selectedToken?.symbol === token.symbol ? '#dbeafe' : '#f9fafb',
-    border: selectedToken?.symbol === token.symbol ? '2px solid #3b82f6' : '2px solid transparent',
+    backgroundColor: selectedToken?.symbol === token.symbol ? c.bgSelected : c.bgHover,
+    border: selectedToken?.symbol === token.symbol ? `2px solid ${c.borderSelected}` : '2px solid transparent',
     borderRadius: '8px',
     cursor: 'pointer',
     transition: 'all 0.2s ease',
@@ -41,18 +44,18 @@ export function TokenList({ tokens, selectedToken, onSelectToken }: TokenListPro
   const tokenSymbolStyle: React.CSSProperties = {
     fontSize: '16px',
     fontWeight: 600,
-    color: '#111827',
+    color: c.text,
   }
 
   const tokenNameStyle: React.CSSProperties = {
     fontSize: '12px',
-    color: '#6b7280',
+    color: c.textSecondary,
   }
 
   const balanceStyle: React.CSSProperties = {
     fontSize: '16px',
     fontWeight: 500,
-    color: '#111827',
+    color: c.text,
   }
 
   return (

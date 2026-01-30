@@ -1,4 +1,5 @@
 import { TransferResult } from '../types'
+import { useColors } from '../context/ThemeContext'
 
 interface TransferStatusProps {
   result: TransferResult | null
@@ -6,13 +7,15 @@ interface TransferStatusProps {
 }
 
 export function TransferStatus({ result, onDismiss }: TransferStatusProps) {
+  const c = useColors()
+
   if (!result) return null
 
   const containerStyle: React.CSSProperties = {
     padding: '16px',
     borderRadius: '8px',
-    backgroundColor: result.success ? '#d1fae5' : '#fee2e2',
-    border: `2px solid ${result.success ? '#10b981' : '#ef4444'}`,
+    backgroundColor: result.success ? c.successBg : c.errorBg,
+    border: `2px solid ${result.success ? c.success : c.error}`,
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
@@ -28,12 +31,12 @@ export function TransferStatus({ result, onDismiss }: TransferStatusProps) {
   const titleStyle: React.CSSProperties = {
     fontSize: '16px',
     fontWeight: 600,
-    color: result.success ? '#065f46' : '#991b1b',
+    color: result.success ? c.successText : c.errorText,
   }
 
   const messageStyle: React.CSSProperties = {
     fontSize: '14px',
-    color: result.success ? '#047857' : '#b91c1c',
+    color: result.success ? c.successText : c.errorText,
     fontFamily: result.txHash ? 'monospace' : 'inherit',
     wordBreak: 'break-all',
   }
@@ -45,7 +48,7 @@ export function TransferStatus({ result, onDismiss }: TransferStatusProps) {
     borderRadius: '4px',
     cursor: 'pointer',
     backgroundColor: 'transparent',
-    color: result.success ? '#065f46' : '#991b1b',
+    color: result.success ? c.successText : c.errorText,
     fontWeight: 600,
   }
 
