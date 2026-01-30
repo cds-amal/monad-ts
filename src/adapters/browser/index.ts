@@ -1,6 +1,6 @@
 // Style adapter
-export { browserStyleAdapter, colors, spacing, radii, fontSizes, fontWeights, shadows } from './style'
-export type { BrowserStyle } from './style'
+export { browserStyleAdapter, createStyleAdapter, colors, spacing, radii, fontSizes, fontWeights, shadows, themeColors } from './style'
+export type { BrowserStyle, Theme, SemanticColors } from './style'
 
 // Render adapter (React DOM components)
 export {

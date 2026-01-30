@@ -58,6 +58,7 @@ export interface StylePort<TStyle> {
   container(): TStyle
   label(): TStyle
   heading(): TStyle
+  divider(): TStyle
 
   // Dropdown
   dropdownContainer(): TStyle

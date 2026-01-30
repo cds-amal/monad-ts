@@ -1,4 +1,4 @@
-import { useStyle } from '../context'
+import { useStyle, useTheme } from '../context'
 import { Box, VStack, Flex } from '../adapters/browser'
 import { Token } from '../ports'
 
@@ -10,6 +10,7 @@ interface TokenListProps {
 
 export function TokenList({ tokens, selectedToken, onSelectToken }: TokenListProps) {
   const style = useStyle()
+  const { colors: c } = useTheme()
 
   return (
     <VStack gap={2}>
@@ -25,14 +26,14 @@ export function TokenList({ tokens, selectedToken, onSelectToken }: TokenListPro
           onClick={() => onSelectToken(token)}
         >
           <VStack gap={1}>
-            <Box as="span" styles={{ fontSize: '16px', fontWeight: 600, color: '#111827' }}>
+            <Box as="span" styles={{ fontSize: '16px', fontWeight: 600, color: c.text }}>
               {token.symbol}
             </Box>
-            <Box as="span" styles={{ fontSize: '12px', color: '#6b7280' }}>
+            <Box as="span" styles={{ fontSize: '12px', color: c.textMuted }}>
               {token.name}
             </Box>
           </VStack>
-          <Box as="span" styles={{ fontSize: '16px', fontWeight: 500, color: '#111827' }}>
+          <Box as="span" styles={{ fontSize: '16px', fontWeight: 500, color: c.text }}>
             {token.balance}
           </Box>
         </Flex>

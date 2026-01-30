@@ -3,9 +3,17 @@
  * Components consume adapters through this context, making them platform-agnostic.
  */
 
-import { createContext, useContext, ReactNode } from 'react'
+import { createContext, useContext, useState, useMemo, ReactNode } from 'react'
 import { StylePort, Web3Port } from '../ports'
-import { BrowserStyle, browserStyleAdapter, browserWeb3Adapter } from '../adapters/browser'
+import { BrowserStyle, createStyleAdapter, browserWeb3Adapter, Theme, themeColors } from '../adapters/browser'
+
+// Theme context type
+interface ThemeState {
+  theme: Theme
+  isDark: boolean
+  toggleTheme: () => void
+  colors: typeof themeColors.light
+}
 
 // Adapter bundle type
 export interface Adapters {
@@ -13,31 +21,46 @@ export interface Adapters {
   web3: Web3Port
 }
 
-// Default adapters (browser)
-const defaultAdapters: Adapters = {
-  style: browserStyleAdapter,
-  web3: browserWeb3Adapter,
-}
+// Contexts
+const ThemeContext = createContext<ThemeState>({
+  theme: 'light',
+  isDark: false,
+  toggleTheme: () => {},
+  colors: themeColors.light,
+})
 
-// Context
-const AdapterContext = createContext<Adapters>(defaultAdapters)
+const AdapterContext = createContext<Adapters>({
+  style: createStyleAdapter('light'),
+  web3: browserWeb3Adapter,
+})
 
 // Provider component
 interface AdapterProviderProps {
-  adapters?: Partial<Adapters>
+  initialTheme?: Theme
   children: ReactNode
 }
 
-export function AdapterProvider({ adapters, children }: AdapterProviderProps) {
-  const mergedAdapters: Adapters = {
-    ...defaultAdapters,
-    ...adapters,
-  }
+export function AdapterProvider({ initialTheme = 'light', children }: AdapterProviderProps) {
+  const [theme, setTheme] = useState<Theme>(initialTheme)
+
+  const themeState = useMemo<ThemeState>(() => ({
+    theme,
+    isDark: theme === 'dark',
+    toggleTheme: () => setTheme(t => t === 'light' ? 'dark' : 'light'),
+    colors: themeColors[theme],
+  }), [theme])
+
+  const adapters = useMemo<Adapters>(() => ({
+    style: createStyleAdapter(theme),
+    web3: browserWeb3Adapter,
+  }), [theme])
 
   return (
-    <AdapterContext.Provider value={mergedAdapters}>
-      {children}
-    </AdapterContext.Provider>
+    <ThemeContext.Provider value={themeState}>
+      <AdapterContext.Provider value={adapters}>
+        {children}
+      </AdapterContext.Provider>
+    </ThemeContext.Provider>
   )
 }
 
@@ -52,4 +75,9 @@ export function useStyle(): StylePort<BrowserStyle> {
 
 export function useWeb3(): Web3Port {
   return useContext(AdapterContext).web3
+}
+
+// Theme hooks
+export function useTheme(): ThemeState {
+  return useContext(ThemeContext)
 }

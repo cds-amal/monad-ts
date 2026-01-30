@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useStyle } from '../context'
+import { useStyle, useTheme } from '../context'
 import { Box, HStack, Flex } from '../adapters/browser'
 import { MOCK_ACCOUNTS, AccountType, MockAccount } from '../adapters/browser'
 import { ColorIntent } from '../ports'
@@ -29,6 +29,7 @@ const TYPE_LABELS: Record<AccountType, string> = {
 
 export function AddressSelect({ value, onChange, disabled }: AddressSelectProps) {
   const style = useStyle()
+  const { colors: c } = useTheme()
   const [isOpen, setIsOpen] = useState(false)
 
   const selectedAccount = MOCK_ACCOUNTS.find(a => a.address === value)
@@ -70,11 +71,11 @@ export function AddressSelect({ value, onChange, disabled }: AddressSelectProps)
             </Box>
           </HStack>
         ) : (
-          <Box as="span" styles={{ color: '#9ca3af' }}>
+          <Box as="span" styles={{ color: c.textMuted }}>
             Select recipient...
           </Box>
         )}
-        <Box as="span" styles={{ color: '#9ca3af' }}>
+        <Box as="span" styles={{ color: c.textMuted }}>
           {isOpen ? '▲' : '▼'}
         </Box>
       </Flex>
@@ -96,10 +97,10 @@ export function AddressSelect({ value, onChange, disabled }: AddressSelectProps)
                     styles={style.dropdownItem()}
                     onClick={() => handleSelect(account)}
                     onMouseEnter={e => {
-                      (e.currentTarget as HTMLElement).style.backgroundColor = '#f3f4f6'
+                      (e.currentTarget as HTMLElement).style.backgroundColor = c.bgHover
                     }}
                     onMouseLeave={e => {
-                      (e.currentTarget as HTMLElement).style.backgroundColor = 'white'
+                      (e.currentTarget as HTMLElement).style.backgroundColor = c.bgCard
                     }}
                   >
                     <HStack gap={2} styles={{ marginBottom: '4px' }}>
@@ -110,10 +111,10 @@ export function AddressSelect({ value, onChange, disabled }: AddressSelectProps)
                         {TYPE_LABELS[account.type]}
                       </Box>
                     </HStack>
-                    <Box styles={{ fontFamily: 'monospace', fontSize: '12px', color: '#6b7280' }}>
+                    <Box styles={{ fontFamily: 'monospace', fontSize: '12px', color: c.textMuted }}>
                       {formatAddress(account.address)}
                     </Box>
-                    <Box styles={{ fontSize: '11px', color: '#9ca3af', marginTop: '2px' }}>
+                    <Box styles={{ fontSize: '11px', color: c.textMuted, marginTop: '2px' }}>
                       {account.description}
                     </Box>
                   </Box>

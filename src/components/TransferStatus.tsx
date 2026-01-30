@@ -1,4 +1,4 @@
-import { useStyle } from '../context'
+import { useStyle, useTheme } from '../context'
 import { Box, VStack, Flex } from '../adapters/browser'
 import { TransferResult } from '../ports'
 
@@ -9,6 +9,7 @@ interface TransferStatusProps {
 
 export function TransferStatus({ result, onDismiss }: TransferStatusProps) {
   const style = useStyle()
+  const { colors: c } = useTheme()
 
   if (!result) return null
 
@@ -42,6 +43,7 @@ export function TransferStatus({ result, onDismiss }: TransferStatusProps) {
           fontWeight: 600,
           border: 'none',
           backgroundColor: 'transparent',
+          color: c.text,
           cursor: 'pointer',
         }}
         onClick={onDismiss}

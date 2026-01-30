@@ -70,13 +70,24 @@ src/
 - **Browser render components**: React DOM with CSS-in-JS
 
 ### Theme-Driven Styling
-Components use semantic props, theme resolves to actual styles:
+Components use semantic props, adapter resolves to actual styles:
 ```tsx
 // Component uses semantic intent
 <Box styles={style.button({ intent: 'primary', size: 'md' })} />
 
-// Adapter resolves to CSS
+// Adapter resolves to CSS (theme-aware)
 { backgroundColor: '#3b82f6', padding: '8px 16px', ... }
+```
+
+### Dark Mode
+Theme state managed at adapter level - components unchanged:
+```tsx
+// Theme toggle
+const { isDark, toggleTheme } = useTheme()
+
+// Colors from theme
+const { colors: c } = useTheme()
+<Box style={{ color: c.text }} />
 ```
 
 ## Mock Accounts
