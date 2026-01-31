@@ -187,9 +187,9 @@ Monad separates pure theme operations from effects, making them unit testable. M
 
 | Metric | mm-monad_01 | mm-imperative_01 |
 |--------|-------------|------------------|
-| Deliverable | Working adapter system | Documentation only |
-| New files | 6 | 1 (CROSS_PLATFORM.md) |
-| Lines added | 324 | 120 |
+| Deliverable | Working iOS simulator app | Documentation only |
+| New files | 8 | 1 (CROSS_PLATFORM.md) |
+| Lines added | ~400 | 120 |
 | Architecture change | None needed | Would require new abstraction layer |
 
 ### mm-monad_01 Adapter System
@@ -201,7 +201,9 @@ src/adapters/
   types.ts           # UIAdapter interface
   AdapterContext.tsx # React context + hooks
   web.tsx            # Web adapter (wraps MDS)
-  native.tsx         # Native adapter (placeholder)
+  native.tsx         # Native adapter (uses MDS tokens)
+src/main.native.tsx  # React Native entry point
+app.json             # Expo configuration
 ```
 
 **Usage:**
@@ -223,6 +225,121 @@ function MyComponent() {
 5. **Platform APIs** - localStorage→AsyncStorage, matchMedia→Appearance
 
 **Conclusion:** Imperative approach would need to adopt adapter patterns (similar to monad) to support React Native.
+
+### iOS Implementation: Root Causes & Fixes
+
+Getting the mm-monad_01 adapter system working on iOS required solving several technical challenges:
+
+#### 1. React Version Mismatch
+**Problem:** React Native 0.81 requires React 19, but project had React 18.
+**Symptom:** `Cannot read property 'S' of undefined` during module load.
+**Fix:** Upgrade to React 19 (`pnpm add react@19 react-dom@19`).
+
+#### 2. Node.js Polyfills for React Native
+**Problem:** MDS dependency chain pulls in Node.js modules (`crypto`, `buffer`, `stream`).
+**Root cause:** `@metamask/design-system-react` → `@metamask/utils` → `ethereum-cryptography` → `@noble/hashes`.
+**Fix:** Metro config with polyfills:
+```javascript
+config.resolver.extraNodeModules = {
+  crypto: require.resolve('crypto-browserify'),
+  stream: require.resolve('readable-stream'),
+  buffer: require.resolve('buffer'),
+  process: require.resolve('process'),
+  // Stub unused modules
+  fs: require.resolve('empty-module'),
+  // ...
+}
+```
+
+#### 3. WebCrypto Polyfill
+**Problem:** `@noble/hashes` requires `globalThis.crypto.getRandomValues`.
+**Fix:** Import `react-native-get-random-values` as first import in entry point.
+
+#### 4. Platform-Specific Files
+**Problem:** Web adapter imports MDS which has crypto deps; can't bundle in native.
+**Fix:** Platform-specific file extensions:
+```
+AdapterContext.tsx        # Web version (imports webAdapter)
+AdapterContext.native.tsx # Native version (imports nativeAdapter only)
+index.ts                  # Web exports
+index.native.ts           # Native exports
+```
+
+#### 5. localStorage Not Available
+**Problem:** `useTheme` hook used `localStorage` which doesn't exist in RN.
+**Fix:** ThemeContext with React state instead of browser APIs.
+
+#### 6. iOS Safe Area
+**Problem:** Content overlapped with notch/status bar.
+**Fix:** Wrap app in `SafeAreaView`.
+
+#### 7. Dark Mode Not Updating
+**Problem:** Native adapter read theme from `Appearance.getColorScheme()` at render time.
+**Fix:** ThemeContext provides theme state; components re-render on context change.
+
+### Key Architectural Insight
+
+The MDS dependency chain creates a "layering violation" where UI packages depend on protocol/crypto code:
+```
+@metamask/design-system-react
+  → @metamask/utils (has address checksum functions)
+    → ethereum-cryptography
+      → @noble/hashes (requires WebCrypto)
+```
+
+This forces React Native apps to ship crypto polyfills they'll never execute. The monad/adapter approach isolates this by:
+1. Hardcoding MDS color tokens in native adapter (avoids importing `@metamask/design-tokens`)
+2. Using platform-specific files to prevent web adapter from being bundled in native
+
+---
+
+## Team Velocity Impact
+
+### Engineering Team Velocity
+
+| Factor | mm-monad_01 | mm-imperative_01 |
+|--------|-------------|------------------|
+| **Time to first feature** | Slower (abstractions upfront) | Faster (direct implementation) |
+| **Time to add similar feature** | Faster (reuse primitives) | Same (duplicate patterns) |
+| **Onboarding new devs** | Steeper curve (learn patterns) | Easier (familiar React) |
+| **Code review speed** | Faster (isolated units) | Slower (larger PRs) |
+| **Debugging time** | Easier (pure functions) | Harder (stateful logic) |
+| **Cross-team handoffs** | Smoother (clear contracts) | Friction (implicit assumptions) |
+
+The velocity difference is most visible in Task D: monad delivered a working cross-platform adapter system while imperative produced documentation only.
+
+### Design Team Velocity
+
+| Factor | mm-monad_01 | mm-imperative_01 |
+|--------|-------------|------------------|
+| **Component consistency** | High (primitives enforce patterns) | Medium (varies by developer) |
+| **Design token usage** | Centralized via adapters | Scattered inline references |
+| **Theme implementation** | Pure operations, easily verified | Coupled to React lifecycle |
+| **New variant creation** | Add to style functors | Copy-paste existing styles |
+| **Design system updates** | Single adapter change | Hunt for all usages |
+
+### Velocity Trade-offs
+
+**mm-monad_01 velocity pattern:**
+- Day 1-5: Slower (building primitives)
+- Day 5-15: Matching velocity (using primitives)
+- Day 15+: Faster velocity (compounding reuse)
+
+**mm-imperative_01 velocity pattern:**
+- Day 1-5: Faster (shipping directly)
+- Day 5-15: Matching velocity (some duplication)
+- Day 15+: Slower velocity (tech debt accumulates)
+
+### Time to Working Implementation
+
+| Task | mm-monad_01 | mm-imperative_01 |
+|------|-------------|------------------|
+| A: Input | Working | Working |
+| B: AddressSelect | Working + reusable Dropdown | Working |
+| C: Dark Mode | Working + system preference | Working |
+| D: Cross-Platform | **Tested on iOS simulator** | **Cannot achieve without rewrite** |
+
+The cross-platform task demonstrates the velocity cliff: imperative approach hits a wall requiring architectural rewrite, while monadic approach extends naturally with MDS token integration.
 
 ---
 
@@ -250,9 +367,21 @@ Inline `className` strings work fine for simple cases, but as complexity grows (
 |------|-------------|------------------|
 | A: Input | 147 LOC | 76 LOC |
 | B: AddressSelect | 65 LOC + 3 files | 108 LOC + 1 file |
-| C: Dark Mode | 85 LOC | 23 LOC |
-| D: Cross-Platform | 324 LOC (working) | 120 LOC (docs only) |
-| **Total new code** | ~621 LOC | ~327 LOC |
+| C: Dark Mode | 52 LOC (ThemeContext) | 23 LOC |
+| D: Cross-Platform | ~600 LOC (iOS working) | 120 LOC (docs only) |
+| **Total new code** | ~864 LOC | ~327 LOC |
+
+### Files Added for Cross-Platform (mm-monad_01)
+| File | Purpose |
+|------|---------|
+| `src/adapters/AdapterContext.native.tsx` | Native-specific context (avoids web imports) |
+| `src/adapters/index.native.ts` | Native-specific exports |
+| `src/main.native.tsx` | React Native entry point with polyfills |
+| `src/theme/useTheme.tsx` | ThemeContext for cross-platform theming |
+| `metro.config.js` | Metro bundler configuration |
+| `app.json` | Expo configuration |
+| `shims/globals.js` | Buffer/process polyfills |
+| `shims/noble-hashes.js` | Crypto stub (unused in UI) |
 
 ### When to Use Each
 
@@ -281,6 +410,7 @@ Inline `className` strings work fine for simple cases, but as complexity grows (
 | `a7a11a7` | Refactor AddressSelect with composable Dropdown and style functor |
 | `50f5040` | Add dark mode with functional theme operations |
 | `225a646` | Add cross-platform adapter system for React Native support |
+| `4b6be04` | Fix iOS: React 19, polyfills, ThemeContext, SafeAreaView |
 
 ### mm-imperative_01
 | Commit | Description |

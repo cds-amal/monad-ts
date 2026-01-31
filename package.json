@@ -2,22 +2,33 @@
   "name": "token-transfer-app",
   "private": true,
   "version": "0.0.1",
-  "type": "module",
+  "main": "src/main.native.tsx",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "native": "expo start",
+    "native:ios": "expo start --ios",
+    "native:android": "expo start --android"
   },
   "dependencies": {
     "@metamask/design-system-react": "^0.6.0",
     "@metamask/design-system-tailwind-preset": "^0.6.1",
     "@metamask/design-tokens": "^8.1.1",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "buffer": "^6.0.3",
+    "crypto-browserify": "^3.12.1",
+    "empty-module": "^0.0.2",
+    "expo": "^54.0.32",
+    "process": "^0.11.10",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-native": "^0.81.5",
+    "react-native-get-random-values": "^1.11.0",
+    "readable-stream": "^4.7.0"
   },
   "devDependencies": {
-    "@types/react": "^18.3.12",
-    "@types/react-dom": "^18.3.1",
+    "@types/react": "^19.2.10",
+    "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.3.3",
     "autoprefixer": "^10.4.24",
     "postcss": "^8.5.6",

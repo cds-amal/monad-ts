@@ -1,5 +1,6 @@
+import { usePrimitives } from '../adapters'
 import { AccountType } from '../services/mockAccounts'
-import { accountTypeBadgeClass, accountTypeLabel } from '../styles/accountStyles'
+import { accountTypeStyle, accountTypeLabel } from '../styles/accountStyles'
 
 interface AccountBadgeProps {
   type: AccountType
@@ -7,9 +8,21 @@ interface AccountBadgeProps {
 
 // Renders account type badge using style functor
 export function AccountBadge({ type }: AccountBadgeProps) {
+  const { Box, Text } = usePrimitives()
+  const style = accountTypeStyle(type)
+
   return (
-    <span className={`px-2 py-0.5 text-xs font-semibold rounded border ${accountTypeBadgeClass(type)}`}>
-      {accountTypeLabel(type)}
-    </span>
+    <Box
+      paddingVertical={1}
+      paddingHorizontal={2}
+      borderRadius={4}
+      borderWidth={1}
+      backgroundColor={style.background}
+      borderColor={style.border}
+    >
+      <Text variant="bodyXs" fontWeight="semibold" color={style.text}>
+        {accountTypeLabel(type)}
+      </Text>
+    </Box>
   )
 }

@@ -1,5 +1,5 @@
-import { forwardRef, useId, useState, useCallback } from 'react'
-import { Box, Text, TextVariant, FontWeight, TextColor, BoxBackgroundColor, BoxBorderColor } from '@metamask/design-system-react'
+import { useState, useCallback } from 'react'
+import { usePrimitives } from '../adapters'
 
 // Validation Result monad - composable validation
 export type ValidationResult =
@@ -51,96 +51,95 @@ export const Validators = {
       : ValidationResult.err(message),
 }
 
-interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
+interface InputProps {
   label?: string
   error?: string
   hint?: string
   validate?: (value: string) => ValidationResult
   validateOnBlur?: boolean
   validateOnChange?: boolean
+  value?: string
   onChange?: (value: string) => void
+  placeholder?: string
+  disabled?: boolean
+  type?: 'text' | 'number' | 'password'
+  step?: string
   endAdornment?: React.ReactNode
 }
 
-export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
-  {
-    label,
-    error: externalError,
-    hint,
-    validate,
-    validateOnBlur = true,
-    validateOnChange = false,
-    onChange,
-    onBlur,
-    endAdornment,
-    disabled,
-    className,
-    id: providedId,
-    ...props
-  },
-  ref
-) {
-  const generatedId = useId()
-  const id = providedId ?? generatedId
+export function Input({
+  label,
+  error: externalError,
+  hint,
+  validate,
+  validateOnBlur = true,
+  validateOnChange = false,
+  value,
+  onChange,
+  placeholder,
+  disabled,
+  type = 'text',
+  endAdornment,
+}: InputProps) {
+  const { Box, Text, TextInput } = usePrimitives()
   const [internalError, setInternalError] = useState<string | null>(null)
   const [touched, setTouched] = useState(false)
 
   const error = externalError ?? internalError
 
-  const runValidation = useCallback((value: string) => {
+  const runValidation = useCallback((val: string) => {
     if (validate) {
-      const result = validate(value)
+      const result = validate(val)
       setInternalError(result.valid ? null : result.error)
       return result
     }
     return ValidationResult.ok()
   }, [validate])
 
-  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    onChange?.(value)
+  const handleChange = useCallback((val: string) => {
+    onChange?.(val)
     if (validateOnChange && touched) {
-      runValidation(value)
+      runValidation(val)
     }
   }, [onChange, validateOnChange, touched, runValidation])
 
-  const handleBlur = useCallback((e: React.FocusEvent<HTMLInputElement>) => {
+  const handleBlur = useCallback(() => {
     setTouched(true)
-    if (validateOnBlur) {
-      runValidation(e.target.value)
+    if (validateOnBlur && value !== undefined) {
+      runValidation(value)
     }
-    onBlur?.(e)
-  }, [validateOnBlur, runValidation, onBlur])
+  }, [validateOnBlur, runValidation, value])
 
   const hasError = !!error && touched
-  const borderColor = hasError
-    ? 'border-error-default focus:border-error-default'
-    : 'border-default focus:border-primary-default'
 
   return (
-    <Box className="flex flex-col" gap={1}>
+    <Box flexDirection="column" gap={1}>
       {label && (
-        <Text variant={TextVariant.BodyMd} fontWeight={FontWeight.Medium} asChild>
-          <label htmlFor={id}>{label}</label>
+        <Text variant="bodyMd" fontWeight="medium">
+          {label}
         </Text>
       )}
 
-      <Box className="relative">
-        <input
-          ref={ref}
-          id={id}
-          disabled={disabled}
-          className={`w-full p-3 text-base border-2 rounded-lg outline-none transition-colors
-            ${borderColor}
-            disabled:bg-muted disabled:cursor-not-allowed
-            ${endAdornment ? 'pr-16' : ''}
-            ${className ?? ''}`}
-          onChange={handleChange}
+      <Box style={{ position: 'relative' }}>
+        <TextInput
+          value={value}
+          onChangeText={handleChange}
           onBlur={handleBlur}
-          {...props}
+          placeholder={placeholder}
+          disabled={disabled}
+          type={type}
+          hasError={hasError}
+          style={endAdornment ? { paddingRight: 64 } : undefined}
         />
         {endAdornment && (
-          <Box className="absolute right-2 top-1/2 -translate-y-1/2">
+          <Box
+            style={{
+              position: 'absolute',
+              right: 8,
+              top: '50%',
+              transform: [{ translateY: -12 }],
+            }}
+          >
             {endAdornment}
           </Box>
         )}
@@ -148,24 +147,24 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
 
       {hasError && (
         <Box
-          className="rounded-md"
           paddingVertical={1}
           paddingHorizontal={2}
-          backgroundColor={BoxBackgroundColor.ErrorMuted}
+          borderRadius={4}
+          backgroundColor="errorMuted"
           borderWidth={1}
-          borderColor={BoxBorderColor.ErrorDefault}
+          borderColor="error"
         >
-          <Text variant={TextVariant.BodyXs} color={TextColor.ErrorDefault}>
+          <Text variant="bodyXs" color="error">
             {error}
           </Text>
         </Box>
       )}
 
       {hint && !hasError && (
-        <Text variant={TextVariant.BodyXs} color={TextColor.TextAlternative}>
+        <Text variant="bodyXs" color="alternative">
           {hint}
         </Text>
       )}
     </Box>
   )
-})
+}

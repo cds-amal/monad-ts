@@ -1,17 +1,23 @@
+/**
+ * React Native AdapterContext
+ *
+ * This version doesn't import webAdapter to avoid bundling MDS dependencies
+ * that have crypto libraries incompatible with React Native.
+ */
+
 import React, { createContext, useContext } from 'react'
 import type { UIAdapter } from './types'
-import { webAdapter } from './web'
+import { nativeAdapter } from './native'
 
 const AdapterContext = createContext<UIAdapter | null>(null)
 
 interface AdapterProviderProps {
   children: React.ReactNode
-  adapter?: UIAdapter // Allow override for testing or platform-specific adapters
+  adapter?: UIAdapter
 }
 
 export function AdapterProvider({ children, adapter }: AdapterProviderProps) {
-  // Use provided adapter or fall back to web adapter
-  const resolvedAdapter = adapter ?? webAdapter
+  const resolvedAdapter = adapter ?? nativeAdapter
 
   return (
     <AdapterContext.Provider value={resolvedAdapter}>
@@ -23,13 +29,11 @@ export function AdapterProvider({ children, adapter }: AdapterProviderProps) {
 export function useAdapter(): UIAdapter {
   const adapter = useContext(AdapterContext)
   if (!adapter) {
-    // Fallback to web adapter if not in provider (for SSR or testing)
-    return webAdapter
+    return nativeAdapter
   }
   return adapter
 }
 
-// Convenience hooks for individual primitives
 export function usePrimitives() {
   const adapter = useAdapter()
   return {

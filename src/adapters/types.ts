@@ -3,6 +3,49 @@ import type { ReactNode, CSSProperties } from 'react'
 // Cross-platform style type
 export type CrossPlatformStyle = CSSProperties | Record<string, unknown>
 
+// Semantic text variants (maps to MDS TextVariant on web)
+export type TextVariant = 'headingLg' | 'headingMd' | 'headingSm' | 'bodyLg' | 'bodyMd' | 'bodySm' | 'bodyXs'
+
+// Semantic colors (maps to MDS color tokens)
+export type SemanticColor =
+  | 'default'
+  | 'alternative'
+  | 'muted'
+  | 'primary'
+  | 'error'
+  | 'success'
+  | 'warning'
+  | 'info'
+
+// Background variants
+export type BackgroundColor =
+  | 'default'
+  | 'alternative'
+  | 'muted'
+  | 'primaryMuted'
+  | 'errorMuted'
+  | 'successMuted'
+  | 'warningMuted'
+  | 'infoMuted'
+
+// Border variants
+export type BorderColor =
+  | 'default'
+  | 'muted'
+  | 'primary'
+  | 'error'
+  | 'success'
+  | 'warning'
+  | 'info'
+  | 'transparent'
+
+// Button variants
+export type ButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'danger'
+export type ButtonSize = 'sm' | 'md' | 'lg'
+
+// Icon names (subset of MDS icons)
+export type IconName = 'wallet' | 'light' | 'dark' | 'close' | 'check' | 'warning' | 'info' | 'error'
+
 // Adapter interface - implementations for web and native
 export interface UIAdapter {
   // Primitives
@@ -11,6 +54,8 @@ export interface UIAdapter {
   Pressable: React.ComponentType<PressableProps>
   TextInput: React.ComponentType<TextInputProps>
   ScrollView: React.ComponentType<ScrollViewProps>
+  Button: React.ComponentType<ButtonProps>
+  IconButton: React.ComponentType<IconButtonProps>
 
   // Theme
   applyTheme: (theme: 'light' | 'dark') => void
@@ -24,10 +69,19 @@ export interface BoxProps {
   className?: string // Web only, ignored on native
   gap?: number
   padding?: number
+  paddingVertical?: number
+  paddingHorizontal?: number
   margin?: number
+  marginVertical?: number
+  marginHorizontal?: number
+  marginBottom?: number
   flexDirection?: 'row' | 'column'
   alignItems?: 'flex-start' | 'center' | 'flex-end' | 'stretch'
   justifyContent?: 'flex-start' | 'center' | 'flex-end' | 'space-between' | 'space-around'
+  backgroundColor?: BackgroundColor
+  borderWidth?: number
+  borderColor?: BorderColor
+  borderRadius?: number
   onPress?: () => void
 }
 
@@ -35,8 +89,10 @@ export interface TextProps {
   children?: ReactNode
   style?: CrossPlatformStyle
   className?: string
-  variant?: 'heading' | 'body' | 'caption'
-  color?: string
+  variant?: TextVariant
+  color?: SemanticColor
+  fontWeight?: 'normal' | 'medium' | 'semibold' | 'bold'
+  fontFamily?: 'default' | 'mono'
 }
 
 export interface PressableProps {
@@ -56,10 +112,31 @@ export interface TextInputProps {
   style?: CrossPlatformStyle
   className?: string
   type?: 'text' | 'number' | 'password'
+  hasError?: boolean
 }
 
 export interface ScrollViewProps {
   children?: ReactNode
   style?: CrossPlatformStyle
   className?: string
+}
+
+export interface ButtonProps {
+  children?: ReactNode
+  variant?: ButtonVariant
+  size?: ButtonSize
+  onPress?: () => void
+  disabled?: boolean
+  loading?: boolean
+  loadingText?: string
+  fullWidth?: boolean
+  type?: 'button' | 'submit'
+}
+
+export interface IconButtonProps {
+  icon: IconName
+  size?: ButtonSize
+  onPress?: () => void
+  disabled?: boolean
+  label: string // Accessibility
 }

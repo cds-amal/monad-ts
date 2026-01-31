@@ -1,4 +1,4 @@
-import { Box, Text, TextVariant, TextColor, FontWeight, BoxJustifyContent, BoxAlignItems, BoxBackgroundColor, BoxBorderColor } from '@metamask/design-system-react'
+import { usePrimitives } from '../adapters'
 import { Token } from '../types'
 
 interface TokenListProps {
@@ -8,47 +8,45 @@ interface TokenListProps {
 }
 
 export function TokenList({ tokens, selectedToken, onSelectToken }: TokenListProps) {
+  const { Box, Text, Pressable } = usePrimitives()
+
   return (
-    <Box className="flex flex-col" gap={2} asChild>
-      <section aria-labelledby="token-list-heading">
-        <Text variant={TextVariant.BodyMd} fontWeight={FontWeight.Medium} color={TextColor.TextDefault} asChild>
-          <h3 id="token-list-heading">Select Token</h3>
-        </Text>
-        {tokens.map(token => {
-          const isSelected = selectedToken?.symbol === token.symbol
-          return (
+    <Box flexDirection="column" gap={2}>
+      <Text variant="bodyMd" fontWeight="medium">
+        Select Token
+      </Text>
+      {tokens.map(token => {
+        const isSelected = selectedToken?.symbol === token.symbol
+        return (
+          <Pressable
+            key={token.symbol}
+            onPress={() => onSelectToken(token)}
+          >
             <Box
-              key={token.symbol}
-              className="flex rounded-lg cursor-pointer transition-all hover:shadow-sm"
-              justifyContent={BoxJustifyContent.Between}
-              alignItems={BoxAlignItems.Center}
+              flexDirection="row"
+              justifyContent="space-between"
+              alignItems="center"
               padding={4}
-              backgroundColor={isSelected ? BoxBackgroundColor.PrimaryMuted : BoxBackgroundColor.BackgroundSection}
+              borderRadius={8}
+              backgroundColor={isSelected ? 'primaryMuted' : 'alternative'}
               borderWidth={2}
-              borderColor={isSelected ? BoxBorderColor.PrimaryDefault : BoxBorderColor.Transparent}
-              asChild
+              borderColor={isSelected ? 'primary' : 'transparent'}
             >
-              <button
-                type="button"
-                onClick={() => onSelectToken(token)}
-                aria-pressed={isSelected}
-              >
-                <Box className="flex flex-col" gap={1}>
-                  <Text variant={TextVariant.BodyMd} fontWeight={FontWeight.Medium}>
-                    {token.symbol}
-                  </Text>
-                  <Text variant={TextVariant.BodyXs} color={TextColor.TextMuted}>
-                    {token.name}
-                  </Text>
-                </Box>
-                <Text variant={TextVariant.BodyMd} fontWeight={FontWeight.Medium}>
-                  {token.balance}
+              <Box flexDirection="column" gap={1}>
+                <Text variant="bodyMd" fontWeight="medium">
+                  {token.symbol}
                 </Text>
-              </button>
+                <Text variant="bodyXs" color="muted">
+                  {token.name}
+                </Text>
+              </Box>
+              <Text variant="bodyMd" fontWeight="medium">
+                {token.balance}
+              </Text>
             </Box>
-          )
-        })}
-      </section>
+          </Pressable>
+        )
+      })}
     </Box>
   )
 }

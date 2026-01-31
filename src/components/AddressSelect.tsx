@@ -1,4 +1,4 @@
-import { Box, Text, TextVariant, FontWeight, TextColor, FontFamily } from '@metamask/design-system-react'
+import { usePrimitives } from '../adapters'
 import { MOCK_ACCOUNTS, MockAccount, AccountType } from '../services/mockAccounts'
 import { Dropdown } from './Dropdown'
 import { AccountBadge } from './AccountBadge'
@@ -13,6 +13,7 @@ interface AddressSelectProps {
 const TYPE_ORDER: AccountType[] = ['eoa', 'contract', 'invalid', 'blacklisted', 'sanctioned']
 
 export function AddressSelect({ value, onChange, disabled }: AddressSelectProps) {
+  const { Box, Text } = usePrimitives()
   const selectedAccount = MOCK_ACCOUNTS.find(a => a.address === value)
   const groupedAccounts = groupBy(MOCK_ACCOUNTS, a => a.type)
 
@@ -27,8 +28,8 @@ export function AddressSelect({ value, onChange, disabled }: AddressSelectProps)
       disabled={disabled}
       placeholder="Select recipient..."
       renderTrigger={(account: MockAccount) => (
-        <Box className="flex" gap={2}>
-          <Text variant={TextVariant.BodySm} fontWeight={FontWeight.Medium}>
+        <Box flexDirection="row" gap={2} alignItems="center">
+          <Text variant="bodySm" fontWeight="medium">
             {account.label}
           </Text>
           <AccountBadge type={account.type} />
@@ -43,22 +44,17 @@ export function AddressSelect({ value, onChange, disabled }: AddressSelectProps)
           return (
             <Dropdown.Group key={type} label={`${accountTypeLabel(type)} Addresses`}>
               {accounts.map(account => (
-                <Dropdown.Item key={account.address} onClick={() => handleSelect(account, close)}>
-                  <Box className="flex" gap={2} marginBottom={1}>
-                    <Text variant={TextVariant.BodySm} fontWeight={FontWeight.Medium}>
+                <Dropdown.Item key={account.address} onPress={() => handleSelect(account, close)}>
+                  <Box flexDirection="row" gap={2} alignItems="center" marginBottom={1}>
+                    <Text variant="bodySm" fontWeight="medium">
                       {account.label}
                     </Text>
                     <AccountBadge type={account.type} />
                   </Box>
-                  <Text
-                    variant={TextVariant.BodyXs}
-                    color={TextColor.TextMuted}
-                    fontFamily={FontFamily.Default}
-                    className="font-mono"
-                  >
+                  <Text variant="bodyXs" color="muted" fontFamily="mono">
                     {formatAddress(account.address)}
                   </Text>
-                  <Text variant={TextVariant.BodyXs} color={TextColor.TextMuted} className="mt-0.5">
+                  <Text variant="bodyXs" color="muted" style={{ marginTop: 2 }}>
                     {account.description}
                   </Text>
                 </Dropdown.Item>

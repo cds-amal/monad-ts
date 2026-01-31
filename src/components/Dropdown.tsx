@@ -1,5 +1,5 @@
 import { useState, useCallback, ReactNode } from 'react'
-import { Box, Text, TextVariant, TextColor, FontWeight } from '@metamask/design-system-react'
+import { usePrimitives } from '../adapters'
 
 interface DropdownProps<T> {
   value: T | undefined
@@ -17,34 +17,60 @@ export function Dropdown<T>({
   renderTrigger,
   children,
 }: DropdownProps<T>) {
+  const { Box, Text, Pressable, ScrollView } = usePrimitives()
   const [isOpen, setIsOpen] = useState(false)
 
   const close = useCallback(() => setIsOpen(false), [])
 
   return (
-    <Box className="relative">
-      <button
-        type="button"
-        className={`w-full p-3 text-sm border-2 border-default rounded-lg text-left flex justify-between items-center
-          ${disabled ? 'bg-muted cursor-not-allowed' : 'bg-default cursor-pointer'}`}
-        onClick={() => !disabled && setIsOpen(!isOpen)}
+    <Box style={{ position: 'relative' }}>
+      <Pressable
+        onPress={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
       >
-        {value !== undefined ? (
-          renderTrigger(value)
-        ) : (
-          <Text variant={TextVariant.BodySm} color={TextColor.TextMuted}>
-            {placeholder}
+        <Box
+          flexDirection="row"
+          justifyContent="space-between"
+          alignItems="center"
+          padding={3}
+          borderRadius={8}
+          borderWidth={2}
+          borderColor="default"
+          backgroundColor={disabled ? 'muted' : 'default'}
+          style={{ opacity: disabled ? 0.6 : 1 }}
+        >
+          {value !== undefined ? (
+            renderTrigger(value)
+          ) : (
+            <Text variant="bodySm" color="muted">
+              {placeholder}
+            </Text>
+          )}
+          <Text variant="bodySm" color="muted">
+            {isOpen ? '▲' : '▼'}
           </Text>
-        )}
-        <Text variant={TextVariant.BodySm} color={TextColor.TextMuted}>
-          {isOpen ? '▲' : '▼'}
-        </Text>
-      </button>
+        </Box>
+      </Pressable>
 
       {isOpen && (
-        <Box className="absolute top-full left-0 right-0 mt-1 bg-default border-2 border-default rounded-lg shadow-xl z-50 max-h-80 overflow-y-auto">
-          {children(close)}
+        <Box
+          style={{
+            position: 'absolute',
+            top: '100%',
+            left: 0,
+            right: 0,
+            marginTop: 4,
+            zIndex: 50,
+            maxHeight: 320,
+          }}
+          borderRadius={8}
+          borderWidth={2}
+          borderColor="default"
+          backgroundColor="default"
+        >
+          <ScrollView style={{ maxHeight: 320 }}>
+            {children(close)}
+          </ScrollView>
         </Box>
       )}
     </Box>
@@ -58,16 +84,19 @@ interface DropdownGroupProps {
 }
 
 Dropdown.Group = function DropdownGroup({ label, children }: DropdownGroupProps) {
+  const { Box, Text } = usePrimitives()
+
   return (
     <Box>
-      <Box className="py-2 px-3 border-b border-default bg-muted">
-        <Text
-          variant={TextVariant.BodyXs}
-          fontWeight={FontWeight.Bold}
-          color={TextColor.TextMuted}
-          className="uppercase tracking-wider"
-        >
-          {label}
+      <Box
+        paddingVertical={2}
+        paddingHorizontal={3}
+        borderColor="default"
+        backgroundColor="muted"
+        style={{ borderBottomWidth: 1 }}
+      >
+        <Text variant="bodyXs" fontWeight="bold" color="muted">
+          {label.toUpperCase()}
         </Text>
       </Box>
       {children}
@@ -77,17 +106,23 @@ Dropdown.Group = function DropdownGroup({ label, children }: DropdownGroupProps)
 
 // Dropdown.Item - for individual options
 interface DropdownItemProps {
-  onClick: () => void
+  onPress: () => void
   children: ReactNode
 }
 
-Dropdown.Item = function DropdownItem({ onClick, children }: DropdownItemProps) {
+Dropdown.Item = function DropdownItem({ onPress, children }: DropdownItemProps) {
+  const { Box, Pressable } = usePrimitives()
+
   return (
-    <Box
-      className="py-2.5 px-3 cursor-pointer border-b border-default/50 transition-colors hover:bg-muted"
-      onClick={onClick}
-    >
-      {children}
-    </Box>
+    <Pressable onPress={onPress}>
+      <Box
+        paddingVertical={3}
+        paddingHorizontal={3}
+        borderColor="muted"
+        style={{ borderBottomWidth: 1 }}
+      >
+        {children}
+      </Box>
+    </Pressable>
   )
 }

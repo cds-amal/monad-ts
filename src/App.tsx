@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Box, Text, Button, AvatarIcon, BoxBackgroundColor, BoxAlignItems, BoxJustifyContent, TextVariant, TextColor, ButtonVariant, ButtonBaseSize, IconName, AvatarBaseSize } from '@metamask/design-system-react'
+import { usePrimitives } from './adapters'
 import { useWallet } from './hooks/useWallet'
 import { WalletButton } from './components/WalletButton'
 import { TokenList } from './components/TokenList'
@@ -9,6 +9,7 @@ import { ThemeToggle } from './components/ThemeToggle'
 import { Token, TransferResult } from './types'
 
 export default function App() {
+  const { Box, Text, Button } = usePrimitives()
   const { wallet, tokens, loading, connect, disconnect, refreshTokens } = useWallet()
   const [selectedToken, setSelectedToken] = useState<Token | null>(null)
   const [transferResult, setTransferResult] = useState<TransferResult | null>(null)
@@ -26,22 +27,22 @@ export default function App() {
 
   return (
     <Box
-      className="min-h-screen"
-      backgroundColor={BoxBackgroundColor.BackgroundAlternative}
+      style={{ minHeight: '100%' }}
+      backgroundColor="alternative"
       paddingVertical={10}
       paddingHorizontal={5}
     >
-      <Box className="max-w-lg mx-auto">
+      <Box style={{ maxWidth: 512, marginHorizontal: 'auto', width: '100%' }}>
         <Box
-          className="flex"
-          justifyContent={BoxJustifyContent.Between}
-          alignItems={BoxAlignItems.Center}
+          flexDirection="row"
+          justifyContent="space-between"
+          alignItems="center"
           marginBottom={8}
         >
-          <Text variant={TextVariant.HeadingLg} asChild>
-            <h1>Token Transfer</h1>
+          <Text variant="headingLg">
+            Token Transfer
           </Text>
-          <Box className="flex" gap={2} alignItems={BoxAlignItems.Center}>
+          <Box flexDirection="row" gap={2} alignItems="center">
             <ThemeToggle />
             <WalletButton
               wallet={wallet}
@@ -53,44 +54,38 @@ export default function App() {
         </Box>
 
         <Box
-          backgroundColor={BoxBackgroundColor.BackgroundDefault}
-          className="rounded-2xl shadow-md"
+          backgroundColor="default"
+          borderRadius={16}
           padding={6}
+          style={{ shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10, elevation: 5 }}
         >
           {!wallet ? (
             <Box
-              className="flex flex-col items-center text-center"
+              flexDirection="column"
+              alignItems="center"
               paddingVertical={12}
               paddingHorizontal={6}
               gap={4}
-              asChild
             >
-              <section aria-labelledby="empty-state-heading">
-                <AvatarIcon
-                  iconName={IconName.Wallet}
-                  size={AvatarBaseSize.Xl}
-                />
-                <Box className="flex flex-col" gap={2} asChild>
-                  <div>
-                    <Text variant={TextVariant.HeadingMd} asChild>
-                      <h2 id="empty-state-heading">Connect Your Wallet</h2>
-                    </Text>
-                    <Text variant={TextVariant.BodyMd} color={TextColor.TextMuted} asChild>
-                      <p>Connect your wallet to start transferring tokens</p>
-                    </Text>
-                  </div>
-                </Box>
-                <Button
-                  variant={ButtonVariant.Primary}
-                  size={ButtonBaseSize.Lg}
-                  onClick={connect}
-                  isDisabled={loading}
-                  isLoading={loading}
-                  loadingText="Connecting"
-                >
-                  Connect Wallet
-                </Button>
-              </section>
+              <Text style={{ fontSize: 48 }}>👛</Text>
+              <Box flexDirection="column" gap={2} alignItems="center">
+                <Text variant="headingMd">
+                  Connect Your Wallet
+                </Text>
+                <Text variant="bodyMd" color="muted" style={{ textAlign: 'center' }}>
+                  Connect your wallet to start transferring tokens
+                </Text>
+              </Box>
+              <Button
+                variant="primary"
+                size="lg"
+                onPress={connect}
+                disabled={loading}
+                loading={loading}
+                loadingText="Connecting"
+              >
+                Connect Wallet
+              </Button>
             </Box>
           ) : (
             <>
@@ -111,7 +106,11 @@ export default function App() {
                 />
               </Box>
 
-              <Box className="h-px bg-border-muted" marginVertical={6} />
+              <Box
+                style={{ height: 1 }}
+                backgroundColor="muted"
+                marginVertical={6}
+              />
 
               <TransferForm
                 token={selectedToken}

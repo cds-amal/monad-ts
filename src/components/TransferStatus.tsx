@@ -1,4 +1,4 @@
-import { Box, Text, ButtonIcon, BoxJustifyContent, BoxAlignItems, BoxBackgroundColor, BoxBorderColor, TextVariant, TextColor, FontWeight, IconName, ButtonIconSize, FontFamily } from '@metamask/design-system-react'
+import { usePrimitives } from '../adapters'
 import { TransferResult } from '../types'
 
 interface TransferStatusProps {
@@ -7,44 +7,45 @@ interface TransferStatusProps {
 }
 
 export function TransferStatus({ result, onDismiss }: TransferStatusProps) {
+  const { Box, Text, IconButton } = usePrimitives()
+
   if (!result) return null
 
   const isSuccess = result.success
 
   return (
     <Box
-      className="flex rounded-lg"
-      justifyContent={BoxJustifyContent.Between}
-      alignItems={BoxAlignItems.Start}
+      flexDirection="row"
+      justifyContent="space-between"
+      alignItems="flex-start"
       padding={4}
       gap={3}
-      backgroundColor={isSuccess ? BoxBackgroundColor.SuccessMuted : BoxBackgroundColor.ErrorMuted}
+      borderRadius={8}
+      backgroundColor={isSuccess ? 'successMuted' : 'errorMuted'}
       borderWidth={2}
-      borderColor={isSuccess ? BoxBorderColor.SuccessDefault : BoxBorderColor.ErrorDefault}
+      borderColor={isSuccess ? 'success' : 'error'}
     >
-      <Box className="flex flex-col" gap={1}>
+      <Box flexDirection="column" gap={1} style={{ flex: 1 }}>
         <Text
-          variant={TextVariant.BodyMd}
-          fontWeight={FontWeight.Medium}
-          color={isSuccess ? TextColor.SuccessDefault : TextColor.ErrorDefault}
+          variant="bodyMd"
+          fontWeight="medium"
+          color={isSuccess ? 'success' : 'error'}
         >
           {isSuccess ? 'Transfer Successful!' : 'Transfer Failed'}
         </Text>
         <Text
-          variant={TextVariant.BodySm}
-          color={isSuccess ? TextColor.SuccessDefault : TextColor.ErrorDefault}
-          fontFamily={result.txHash ? FontFamily.Default : undefined}
-          className={result.txHash ? 'font-mono break-all' : 'break-all'}
+          variant="bodySm"
+          color={isSuccess ? 'success' : 'error'}
+          fontFamily={result.txHash ? 'mono' : 'default'}
         >
           {isSuccess ? `TX: ${result.txHash}` : result.error}
         </Text>
       </Box>
-      <ButtonIcon
-        iconName={IconName.Close}
-        size={ButtonIconSize.Sm}
-        ariaLabel="Dismiss"
-        onClick={onDismiss}
-        className="bg-transparent hover:bg-transparent"
+      <IconButton
+        icon="close"
+        size="sm"
+        label="Dismiss"
+        onPress={onDismiss}
       />
     </Box>
   )

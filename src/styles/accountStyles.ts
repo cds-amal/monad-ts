@@ -1,21 +1,22 @@
 import { AccountType } from '../services/mockAccounts'
+import type { BackgroundColor, BorderColor, SemanticColor } from '../adapters/types'
 
-// Style configuration - separates data from presentation
+// Style configuration using adapter semantic colors
 export interface StyleConfig {
-  bg: string
-  text: string
-  border: string
+  background: BackgroundColor
+  text: SemanticColor
+  border: BorderColor
 }
 
 // Functor: AccountType → StyleConfig
 // This is a pure mapping that can be composed/transformed
 export const accountTypeStyle = (type: AccountType): StyleConfig => {
   const styles: Record<AccountType, StyleConfig> = {
-    eoa: { bg: 'bg-success-muted', text: 'text-success-default', border: 'border-success-default' },
-    contract: { bg: 'bg-info-muted', text: 'text-info-default', border: 'border-info-default' },
-    invalid: { bg: 'bg-error-muted', text: 'text-error-default', border: 'border-error-default' },
-    blacklisted: { bg: 'bg-warning-muted', text: 'text-warning-default', border: 'border-warning-default' },
-    sanctioned: { bg: 'bg-error-alternative', text: 'text-error-default', border: 'border-error-default' },
+    eoa: { background: 'successMuted', text: 'success', border: 'success' },
+    contract: { background: 'infoMuted', text: 'info', border: 'info' },
+    invalid: { background: 'errorMuted', text: 'error', border: 'error' },
+    blacklisted: { background: 'warningMuted', text: 'warning', border: 'warning' },
+    sanctioned: { background: 'errorMuted', text: 'error', border: 'error' },
   }
   return styles[type]
 }
@@ -31,14 +32,6 @@ export const accountTypeLabel = (type: AccountType): string => {
   }
   return labels[type]
 }
-
-// Compose style config into className string
-export const styleToClassName = (style: StyleConfig): string =>
-  `${style.bg} ${style.text} ${style.border}`
-
-// Composed: AccountType → className (functor composition)
-export const accountTypeBadgeClass = (type: AccountType): string =>
-  styleToClassName(accountTypeStyle(type))
 
 // Pure function: format address with ellipsis
 export const formatAddress = (addr: string, maxLength = 16): string =>
