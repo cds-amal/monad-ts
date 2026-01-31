@@ -83,4 +83,8 @@ export const nativeStyleAdapter: StyleAdapter = {
     android: 'monospace',
     default: 'monospace',
   }) as string,
+
+  select: <T>(options: { web?: T; native?: T; default?: T }): T | undefined => {
+    return options.native ?? options.default
+  },
 }

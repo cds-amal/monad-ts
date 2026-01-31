@@ -11,7 +11,7 @@ import { Token, TransferResult } from './types'
 
 function AppContent() {
   const { Box, Text } = useRender()
-  const { normalize } = useStyle()
+  const { normalize, select } = useStyle()
   const c = useColors()
   const { wallet, tokens, loading, connect, disconnect, refreshTokens } = useWallet()
   const [selectedToken, setSelectedToken] = useState<Token | null>(null)
@@ -36,12 +36,14 @@ function AppContent() {
     alignItems: 'center',
     marginBottom: 32,
     gap: 12,
+    ...select({ native: { flexWrap: 'wrap' } }),
   })
 
   const titleStyle = normalize({
     fontSize: 24,
     fontWeight: '700',
     color: c.text,
+    ...select({ native: { flexShrink: 1 } }),
   })
 
   const headerRightStyle = normalize({

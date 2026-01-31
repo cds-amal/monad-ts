@@ -77,4 +77,8 @@ export const webStyleAdapter: StyleAdapter = {
   }),
 
   monoFont: () => 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+
+  select: <T>(options: { web?: T; native?: T; default?: T }): T | undefined => {
+    return options.web ?? options.default
+  },
 }

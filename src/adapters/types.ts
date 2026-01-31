@@ -70,6 +70,8 @@ export interface StyleAdapter {
   shadow: (elevation: number, color?: string) => Style
   // Platform-specific font
   monoFont: () => string
+  // Select platform-specific styles (like Platform.select in RN)
+  select: <T>(options: { web?: T; native?: T; default?: T }) => T | undefined
 }
 
 export interface Adapter {
