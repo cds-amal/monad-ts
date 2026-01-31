@@ -104,32 +104,3 @@ export function getAccountsByType(type: AccountType): MockAccount[] {
 export function getAccountByAddress(address: string): MockAccount | undefined {
   return MOCK_ACCOUNTS.find(a => a.address.toLowerCase() === address.toLowerCase())
 }
-
-export function validateAddress(address: string): { valid: boolean; error?: string; accountType?: AccountType } {
-  const account = getAccountByAddress(address)
-
-  if (account) {
-    switch (account.type) {
-      case 'invalid':
-        return { valid: false, error: `Invalid address: ${account.description}`, accountType: 'invalid' }
-      case 'blacklisted':
-        return { valid: false, error: `Address is blacklisted: ${account.description}`, accountType: 'blacklisted' }
-      case 'sanctioned':
-        return { valid: false, error: `Address is sanctioned: ${account.description}`, accountType: 'sanctioned' }
-      case 'contract':
-        return { valid: true, accountType: 'contract' } // Valid but might want to warn
-      case 'eoa':
-        return { valid: true, accountType: 'eoa' }
-    }
-  }
-
-  // Basic format validation for unknown addresses
-  if (!address.startsWith('0x')) {
-    return { valid: false, error: 'Address must start with 0x' }
-  }
-  if (address.length !== 42) {
-    return { valid: false, error: 'Address must be 42 characters' }
-  }
-
-  return { valid: true, accountType: 'eoa' }
-}

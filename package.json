@@ -4,12 +4,13 @@
   "version": "0.0.1",
   "main": "src/main.native.tsx",
   "scripts": {
+    "prebuild": "node scripts/extract-tokens.js",
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "pnpm prebuild && tsc -b && vite build",
     "preview": "vite preview",
-    "native": "expo start",
-    "native:ios": "expo start --ios",
-    "native:android": "expo start --android"
+    "native": "pnpm prebuild && expo start",
+    "native:ios": "pnpm prebuild && expo start --ios",
+    "native:android": "pnpm prebuild && expo start --android"
   },
   "dependencies": {
     "@metamask/design-system-react": "^0.6.0",

@@ -16,6 +16,7 @@ import {
   ActivityIndicator,
 } from 'react-native'
 import { useTheme } from '../theme/useTheme'
+import { lightTheme, darkTheme, ThemeTokens } from './tokens.native'
 import type {
   UIAdapter,
   BoxProps,
@@ -34,33 +35,6 @@ import type {
   IconName,
 } from './types'
 
-// Hardcoded MDS tokens (avoids importing @metamask/design-tokens which has crypto deps)
-const lightTheme = {
-  colors: {
-    text: { default: '#121314', alternative: '#686e7d', muted: '#b7bbc8' },
-    background: { default: '#ffffff', alternative: '#f3f5f9', muted: '#3c4d9d0f', pressed: '#858b9a29' },
-    border: { default: '#b7bbc8', muted: '#b7bbc866' },
-    primary: { default: '#4459ff', muted: '#4459ff1a' },
-    error: { default: '#ca3542', muted: '#ca35421a' },
-    success: { default: '#457a39', muted: '#457a391a' },
-    warning: { default: '#9a6300', muted: '#9a63001a' },
-    info: { default: '#4459ff', muted: '#4459ff1a' },
-  }
-}
-
-const darkTheme = {
-  colors: {
-    text: { default: '#ffffff', alternative: '#9ca1af', muted: '#4b505c' },
-    background: { default: '#121314', alternative: '#000000', muted: '#e0e5ff14', pressed: '#dadce514' },
-    border: { default: '#858b9a', muted: '#858b9a33' },
-    primary: { default: '#8b99ff', muted: '#8b99ff26' },
-    error: { default: '#ff7584', muted: '#ff758426' },
-    success: { default: '#baf24a', muted: '#baf24a26' },
-    warning: { default: '#f0b034', muted: '#f0b03426' },
-    info: { default: '#8b99ff', muted: '#8b99ff26' },
-  }
-}
-
 // Get theme tokens based on theme state
 const getThemeTokens = (isDark: boolean) => {
   return isDark ? darkTheme : lightTheme
@@ -72,9 +46,18 @@ const useThemeTokens = () => {
   return getThemeTokens(isDark)
 }
 
+// Generic color mapper factory
+const createColorMapper = <T extends string>(
+  getColorMap: (tokens: ThemeTokens) => Record<T, string>,
+  defaultKey?: T
+) => (value: T | undefined, tokens: ThemeTokens): string | undefined => {
+  const map = getColorMap(tokens)
+  return value ? map[value] : (defaultKey ? map[defaultKey] : undefined)
+}
+
 // Map semantic text colors to theme tokens
-const getTextColor = (color: SemanticColor | undefined, tokens: typeof lightTheme) => {
-  const colorMap: Record<SemanticColor, string> = {
+const getTextColor = createColorMapper<SemanticColor>(
+  (tokens) => ({
     default: tokens.colors.text.default,
     alternative: tokens.colors.text.alternative,
     muted: tokens.colors.text.muted,
@@ -83,13 +66,13 @@ const getTextColor = (color: SemanticColor | undefined, tokens: typeof lightThem
     success: tokens.colors.success.default,
     warning: tokens.colors.warning.default,
     info: tokens.colors.info.default,
-  }
-  return color ? colorMap[color] : tokens.colors.text.default
-}
+  }),
+  'default'
+)
 
 // Map background colors to theme tokens
-const getBackgroundColor = (bg: BackgroundColor | undefined, tokens: typeof lightTheme) => {
-  const bgMap: Record<BackgroundColor, string> = {
+const getBackgroundColor = createColorMapper<BackgroundColor>(
+  (tokens) => ({
     default: tokens.colors.background.default,
     alternative: tokens.colors.background.alternative,
     muted: tokens.colors.background.muted,
@@ -98,13 +81,12 @@ const getBackgroundColor = (bg: BackgroundColor | undefined, tokens: typeof ligh
     successMuted: tokens.colors.success.muted,
     warningMuted: tokens.colors.warning.muted,
     infoMuted: tokens.colors.info.muted,
-  }
-  return bg ? bgMap[bg] : undefined
-}
+  })
+)
 
 // Map border colors to theme tokens
-const getBorderColor = (border: BorderColor | undefined, tokens: typeof lightTheme) => {
-  const borderMap: Record<BorderColor, string> = {
+const getBorderColor = createColorMapper<BorderColor>(
+  (tokens) => ({
     default: tokens.colors.border.default,
     muted: tokens.colors.border.muted,
     primary: tokens.colors.primary.default,
@@ -113,9 +95,8 @@ const getBorderColor = (border: BorderColor | undefined, tokens: typeof lightThe
     warning: tokens.colors.warning.default,
     info: tokens.colors.info.default,
     transparent: 'transparent',
-  }
-  return border ? borderMap[border] : undefined
-}
+  })
+)
 
 // Typography variants
 const getTextVariantStyle = (variant: TextVariant) => {
@@ -159,7 +140,7 @@ interface ButtonStyleResult {
 }
 
 // Button styles
-const getButtonStyles = (variant: ButtonVariant, size: ButtonSize, disabled: boolean, tokens: typeof lightTheme): ButtonStyleResult => {
+const getButtonStyles = (variant: ButtonVariant, size: ButtonSize, disabled: boolean, tokens: ThemeTokens): ButtonStyleResult => {
 
   const variantStyles: Record<ButtonVariant, { backgroundColor: string; color: string; borderWidth?: number; borderColor?: string }> = {
     primary: {
@@ -209,6 +190,19 @@ const iconMap: Record<IconName, string> = {
   warning: '⚠️',
   info: 'ℹ️',
   error: '❌',
+}
+
+// Reusable hook for press state management
+const usePressedState = (pressedOpacity = 0.7) => {
+  const [pressed, setPressed] = useState(false)
+  return {
+    pressed,
+    pressHandlers: {
+      onPressIn: () => setPressed(true),
+      onPressOut: () => setPressed(false),
+    },
+    pressedStyle: pressed ? { opacity: pressedOpacity } : undefined,
+  }
 }
 
 const Box = forwardRef<View, BoxProps>(({
@@ -299,19 +293,18 @@ const Pressable = forwardRef<View, PressableProps>(({
   onPress,
   disabled,
 }, ref) => {
-  const [pressed, setPressed] = useState(false)
+  const { pressHandlers, pressedStyle } = usePressedState()
 
   return (
     <RNPressable
       ref={ref}
       style={[
         style as object,
-        pressed && { opacity: 0.7 },
+        pressedStyle,
         disabled && { opacity: 0.5 },
       ]}
       onPress={onPress}
-      onPressIn={() => setPressed(true)}
-      onPressOut={() => setPressed(false)}
+      {...pressHandlers}
       disabled={disabled}
     >
       {children}
@@ -384,7 +377,7 @@ const Button = forwardRef<View, ButtonProps>(({
   loadingText,
   fullWidth,
 }, ref) => {
-  const [pressed, setPressed] = useState(false)
+  const { pressHandlers, pressedStyle } = usePressedState(0.8)
   const tokens = useThemeTokens()
   const buttonStyle = getButtonStyles(variant, size, disabled || loading || false, tokens)
 
@@ -394,11 +387,10 @@ const Button = forwardRef<View, ButtonProps>(({
       style={[
         buttonStyle,
         fullWidth && { width: '100%' },
-        pressed && { opacity: 0.8 },
+        pressedStyle,
       ]}
       onPress={onPress}
-      onPressIn={() => setPressed(true)}
-      onPressOut={() => setPressed(false)}
+      {...pressHandlers}
       disabled={disabled || loading}
     >
       {loading && (
@@ -423,7 +415,7 @@ const IconButton = forwardRef<View, IconButtonProps>(({
   disabled,
   label,
 }, ref) => {
-  const [pressed, setPressed] = useState(false)
+  const { pressHandlers, pressedStyle } = usePressedState()
   const tokens = useThemeTokens()
 
   const sizeMap: Record<ButtonSize, number> = { sm: 32, md: 40, lg: 48 }
@@ -441,12 +433,11 @@ const IconButton = forwardRef<View, IconButtonProps>(({
           justifyContent: 'center',
           backgroundColor: tokens.colors.background.muted,
         },
-        pressed && { opacity: 0.7 },
+        pressedStyle,
         disabled && { opacity: 0.5 },
       ]}
       onPress={onPress}
-      onPressIn={() => setPressed(true)}
-      onPressOut={() => setPressed(false)}
+      {...pressHandlers}
       disabled={disabled}
       accessibilityLabel={label}
     >

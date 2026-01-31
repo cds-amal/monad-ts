@@ -1,5 +1,5 @@
 import { Wallet, Token, TransferRequest, TransferResult } from '../types'
-import { validateAddress } from './mockAccounts'
+import { validateAddress } from '../validation/addressValidation'
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
@@ -67,9 +67,5 @@ export const web3Service = {
       success: true,
       txHash: '0x' + Math.random().toString(16).slice(2) + Math.random().toString(16).slice(2),
     }
-  },
-
-  formatAddress(address: string): string {
-    return `${address.slice(0, 6)}...${address.slice(-4)}`
   },
 }

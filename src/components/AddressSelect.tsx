@@ -1,8 +1,9 @@
 import { usePrimitives } from '../adapters'
-import { MOCK_ACCOUNTS, MockAccount, AccountType } from '../services/mockAccounts'
+import { MockAccount, AccountType } from '../services/mockAccounts'
+import { useServices } from '../services/ServicesContext'
 import { Dropdown } from './Dropdown'
 import { AccountBadge } from './AccountBadge'
-import { formatAddress, groupBy, accountTypeLabel } from '../styles/accountStyles'
+import { groupBy, accountTypeLabel } from '../styles/accountStyles'
 
 interface AddressSelectProps {
   value: string
@@ -14,8 +15,10 @@ const TYPE_ORDER: AccountType[] = ['eoa', 'contract', 'invalid', 'blacklisted', 
 
 export function AddressSelect({ value, onChange, disabled }: AddressSelectProps) {
   const { Box, Text } = usePrimitives()
-  const selectedAccount = MOCK_ACCOUNTS.find(a => a.address === value)
-  const groupedAccounts = groupBy(MOCK_ACCOUNTS, a => a.type)
+  const { getAccounts, formatAddress } = useServices()
+  const accounts = getAccounts()
+  const selectedAccount = accounts.find(a => a.address === value)
+  const groupedAccounts = groupBy(accounts, a => a.type)
 
   const handleSelect = (account: MockAccount, close: () => void) => {
     onChange(account.address)

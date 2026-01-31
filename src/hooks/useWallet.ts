@@ -1,8 +1,9 @@
 import { useState, useCallback } from 'react'
 import { Wallet, Token } from '../types'
-import { web3Service } from '../services/mockWeb3'
+import { useServices } from '../services/ServicesContext'
 
 export function useWallet() {
+  const { connectWallet, disconnectWallet, getTokens } = useServices()
   const [wallet, setWallet] = useState<Wallet | null>(null)
   const [tokens, setTokens] = useState<Token[]>([])
   const [loading, setLoading] = useState(false)
@@ -12,33 +13,33 @@ export function useWallet() {
     setLoading(true)
     setError(null)
     try {
-      const connectedWallet = await web3Service.connectWallet()
+      const connectedWallet = await connectWallet()
       setWallet(connectedWallet)
-      const walletTokens = await web3Service.getTokens()
+      const walletTokens = await getTokens()
       setTokens(walletTokens)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to connect')
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [connectWallet, getTokens])
 
   const disconnect = useCallback(async () => {
     setLoading(true)
     try {
-      await web3Service.disconnectWallet()
+      await disconnectWallet()
       setWallet(null)
       setTokens([])
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [disconnectWallet])
 
   const refreshTokens = useCallback(async () => {
     if (!wallet) return
-    const walletTokens = await web3Service.getTokens()
+    const walletTokens = await getTokens()
     setTokens(walletTokens)
-  }, [wallet])
+  }, [wallet, getTokens])
 
   return {
     wallet,

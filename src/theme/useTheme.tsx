@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, ReactNode } from 'react'
 
 export type Theme = 'light' | 'dark'
 
@@ -35,17 +35,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 export function useTheme(): ThemeContextValue {
   const ctx = useContext(ThemeContext)
   if (!ctx) {
-    // Fallback for when not in provider (shouldn't happen in normal use)
-    return {
-      theme: 'light',
-      toggleTheme: () => {},
-      isDark: false,
-      isLight: true,
+    if (__DEV__) {
+      throw new Error('useTheme must be used within ThemeProvider')
     }
+    console.warn('useTheme: ThemeProvider missing')
+    return { theme: 'light', toggleTheme: () => {}, isDark: false, isLight: true }
   }
   return ctx
 }
 
-// Renamed for compatibility with existing code
 export { useTheme as default }
-export const toggle = () => {} // placeholder for old API

@@ -1,6 +1,6 @@
 import { usePrimitives } from '../adapters'
 import { Wallet } from '../types'
-import { web3Service } from '../services/mockWeb3'
+import { useServices } from '../services/ServicesContext'
 
 interface WalletButtonProps {
   wallet: Wallet | null
@@ -11,6 +11,7 @@ interface WalletButtonProps {
 
 export function WalletButton({ wallet, loading, onConnect, onDisconnect }: WalletButtonProps) {
   const { Box, Text, Button } = usePrimitives()
+  const { formatAddress } = useServices()
 
   if (wallet) {
     return (
@@ -22,7 +23,7 @@ export function WalletButton({ wallet, loading, onConnect, onDisconnect }: Walle
           backgroundColor="muted"
         >
           <Text variant="bodySm" fontFamily="mono">
-            {web3Service.formatAddress(wallet.address)}
+            {formatAddress(wallet.address)}
           </Text>
         </Box>
         <Button

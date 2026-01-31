@@ -1,10 +1,10 @@
 import { useState, useMemo } from 'react'
 import { usePrimitives } from '../adapters'
 import { Token, TransferResult } from '../types'
-import { web3Service } from '../services/mockWeb3'
+import { useServices } from '../services/ServicesContext'
 import { AddressSelect } from './AddressSelect'
-import { validateAddress, getAccountByAddress } from '../services/mockAccounts'
-import { Input, ValidationResult, Validators } from './Input'
+import { Input } from './Input'
+import { ValidationResult, Validators } from '../validation'
 
 interface TransferFormProps {
   token: Token | null
@@ -13,6 +13,7 @@ interface TransferFormProps {
 
 export function TransferForm({ token, onTransferComplete }: TransferFormProps) {
   const { Box, Text, Button, Pressable } = usePrimitives()
+  const { transfer, validateAddress, getAccountByAddress } = useServices()
   const [recipient, setRecipient] = useState('')
   const [amount, setAmount] = useState('')
   const [loading, setLoading] = useState(false)
@@ -47,7 +48,7 @@ export function TransferForm({ token, onTransferComplete }: TransferFormProps) {
 
     setLoading(true)
     try {
-      const result = await web3Service.transfer({
+      const result = await transfer({
         to: recipient,
         amount,
         token,

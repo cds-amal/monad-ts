@@ -19,6 +19,8 @@ import { SafeAreaView, StatusBar } from 'react-native'
 import { AdapterProvider } from './adapters/AdapterContext'
 import { nativeAdapter } from './adapters/native'
 import { ThemeProvider, useTheme } from './theme/useTheme'
+import { ServicesProvider } from './services/ServicesContext'
+import { defaultServices } from './services/defaultServices'
 import App from './App'
 
 function AppWithSafeArea() {
@@ -27,9 +29,11 @@ function AppWithSafeArea() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: isDark ? '#121314' : '#f3f5f9' }}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
-      <AdapterProvider adapter={nativeAdapter}>
-        <App />
-      </AdapterProvider>
+      <ServicesProvider services={defaultServices}>
+        <AdapterProvider adapter={nativeAdapter}>
+          <App />
+        </AdapterProvider>
+      </ServicesProvider>
     </SafeAreaView>
   )
 }
