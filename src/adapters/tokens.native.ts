@@ -2,7 +2,7 @@
  * Auto-generated from @metamask/design-tokens
  * DO NOT EDIT MANUALLY - run `pnpm prebuild` to regenerate
  *
- * Generated: 2026-01-31T18:31:54.861Z
+ * Generated: 2026-01-31T19:01:04.964Z
  */
 
 export interface ThemeTokens {
