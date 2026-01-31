@@ -15,34 +15,45 @@ if (global.crypto && !globalThis.crypto) {
 }
 
 import { registerRootComponent } from 'expo'
-import { SafeAreaView, StatusBar } from 'react-native'
+import { SafeAreaView, StatusBar, Platform } from 'react-native'
 import { AdapterProvider } from './adapters/AdapterContext'
 import { nativeAdapter } from './adapters/native'
 import { ThemeProvider, useTheme } from './theme/useTheme'
+import { EnvironmentProvider, createEnvironment } from './environment'
+import { FeatureFlagsProvider } from './features'
 import { ServicesProvider } from './services/ServicesContext'
 import { defaultServices } from './services/defaultServices'
 import App from './App'
 
-function AppWithSafeArea() {
+const environment = createEnvironment(
+  __DEV__ ? 'development' : 'production',
+  Platform.OS === 'ios' ? 'ios' : 'android'
+)
+
+function ThemedApp() {
   const { isDark } = useTheme()
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: isDark ? '#121314' : '#f3f5f9' }}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
-      <ServicesProvider services={defaultServices}>
-        <AdapterProvider adapter={nativeAdapter}>
-          <App />
-        </AdapterProvider>
-      </ServicesProvider>
+      <FeatureFlagsProvider>
+        <ServicesProvider services={defaultServices}>
+          <AdapterProvider adapter={nativeAdapter}>
+            <App />
+          </AdapterProvider>
+        </ServicesProvider>
+      </FeatureFlagsProvider>
     </SafeAreaView>
   )
 }
 
 function NativeApp() {
   return (
-    <ThemeProvider>
-      <AppWithSafeArea />
-    </ThemeProvider>
+    <EnvironmentProvider environment={environment}>
+      <ThemeProvider>
+        <ThemedApp />
+      </ThemeProvider>
+    </EnvironmentProvider>
   )
 }
 

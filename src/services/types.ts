@@ -22,4 +22,7 @@ export interface Services {
 
   // Formatting
   formatAddress: (address: string, maxLength?: number) => string
+
+  // Flag details
+  getFlagDetails: (address: string) => { reason: string; details: string } | null
 }

@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useCallback, ReactNode } from 'react'
+import { useEnvironment } from '../environment'
 
 export type Theme = 'light' | 'dark'
 
@@ -33,9 +34,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 }
 
 export function useTheme(): ThemeContextValue {
+  const { isDev } = useEnvironment()
   const ctx = useContext(ThemeContext)
   if (!ctx) {
-    if (__DEV__) {
+    if (isDev) {
       throw new Error('useTheme must be used within ThemeProvider')
     }
     console.warn('useTheme: ThemeProvider missing')

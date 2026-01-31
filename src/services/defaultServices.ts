@@ -24,4 +24,16 @@ export const defaultServices: Services = {
 
   // Formatting (using the shared implementation from accountStyles)
   formatAddress,
+
+  // Flag details
+  getFlagDetails: (address: string) => {
+    const account = getAccountByAddress(address)
+    if (!account || !account.flagReason || !account.flagDetails) {
+      return null
+    }
+    return {
+      reason: account.flagReason,
+      details: account.flagDetails,
+    }
+  },
 }

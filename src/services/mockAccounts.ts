@@ -5,6 +5,10 @@ export interface MockAccount {
   label: string
   type: AccountType
   description: string
+  /** Reason shown in flag explanation UI (for blacklisted/sanctioned) */
+  flagReason?: string
+  /** Detailed explanation for flagged addresses */
+  flagDetails?: string
 }
 
 export const MOCK_ACCOUNTS: MockAccount[] = [
@@ -74,12 +78,16 @@ export const MOCK_ACCOUNTS: MockAccount[] = [
     label: 'Flagged Wallet',
     type: 'blacklisted',
     description: 'Flagged for suspicious activity',
+    flagReason: 'Suspicious Activity',
+    flagDetails: 'This address was flagged on 2024-01-15 due to involvement in a phishing campaign targeting DeFi users. Transactions to this address may be irreversible.',
   },
   {
     address: '0xBLACK9876543210fedcba9876543210fedc2222',
     label: 'Reported Scammer',
     type: 'blacklisted',
     description: 'Reported phishing address',
+    flagReason: 'Community Report',
+    flagDetails: 'Multiple community members reported this address for impersonating support staff and requesting seed phrases. Last reported: 2024-02-20.',
   },
 
   // Sanctioned addresses (OFAC, etc.)
@@ -88,12 +96,16 @@ export const MOCK_ACCOUNTS: MockAccount[] = [
     label: 'Tornado Cash',
     type: 'sanctioned',
     description: 'OFAC sanctioned address',
+    flagReason: 'OFAC Sanctions',
+    flagDetails: 'This address is on the U.S. Treasury OFAC sanctions list (added 2022-08-08). Interacting with this address may violate U.S. law and result in legal penalties.',
   },
   {
     address: '0xSANC7890abcdef1234567890abcdef1234567890',
     label: 'Sanctioned Entity',
     type: 'sanctioned',
     description: 'Government sanctions list',
+    flagReason: 'International Sanctions',
+    flagDetails: 'This address belongs to an entity on multiple international sanctions lists. Transactions are blocked by most exchanges and may be subject to seizure.',
   },
 ]
 

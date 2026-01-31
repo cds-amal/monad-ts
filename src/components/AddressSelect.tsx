@@ -3,7 +3,10 @@ import { MockAccount, AccountType } from '../services/mockAccounts'
 import { useServices } from '../services/ServicesContext'
 import { Dropdown } from './Dropdown'
 import { AccountBadge } from './AccountBadge'
+import { FlaggedAddressTooltip } from './FlaggedAddressTooltip'
 import { groupBy, accountTypeLabel } from '../styles/accountStyles'
+
+const isFlagged = (type: AccountType) => type === 'blacklisted' || type === 'sanctioned'
 
 interface AddressSelectProps {
   value: string
@@ -36,6 +39,9 @@ export function AddressSelect({ value, onChange, disabled }: AddressSelectProps)
             {account.label}
           </Text>
           <AccountBadge type={account.type} />
+          {isFlagged(account.type) && (
+            <FlaggedAddressTooltip address={account.address} />
+          )}
         </Box>
       )}
     >
@@ -53,6 +59,9 @@ export function AddressSelect({ value, onChange, disabled }: AddressSelectProps)
                       {account.label}
                     </Text>
                     <AccountBadge type={account.type} />
+                    {isFlagged(account.type) && (
+                      <FlaggedAddressTooltip address={account.address} />
+                    )}
                   </Box>
                   <Text variant="bodyXs" color="muted" fontFamily="mono">
                     {formatAddress(account.address)}
