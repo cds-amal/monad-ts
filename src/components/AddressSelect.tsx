@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Box, Text, TextVariant, FontWeight, TextColor, FontFamily } from '@metamask/design-system-react'
 import { MOCK_ACCOUNTS, MockAccount, AccountType } from '../services/mockAccounts'
 
 interface AddressSelectProps {
@@ -7,12 +8,12 @@ interface AddressSelectProps {
   disabled?: boolean
 }
 
-const TYPE_COLORS: Record<AccountType, { bg: string; text: string; border: string }> = {
-  eoa: { bg: '#d1fae5', text: '#065f46', border: '#10b981' },
-  contract: { bg: '#dbeafe', text: '#1e40af', border: '#3b82f6' },
-  invalid: { bg: '#fee2e2', text: '#991b1b', border: '#ef4444' },
-  blacklisted: { bg: '#fef3c7', text: '#92400e', border: '#f59e0b' },
-  sanctioned: { bg: '#fce7f3', text: '#9d174d', border: '#ec4899' },
+const TYPE_COLORS: Record<AccountType, string> = {
+  eoa: 'bg-success-muted text-success-default border-success-default',
+  contract: 'bg-info-muted text-info-default border-info-default',
+  invalid: 'bg-error-muted text-error-default border-error-default',
+  blacklisted: 'bg-warning-muted text-warning-default border-warning-default',
+  sanctioned: 'bg-error-alternative text-error-default border-error-default',
 }
 
 const TYPE_LABELS: Record<AccountType, string> = {
@@ -27,80 +28,6 @@ export function AddressSelect({ value, onChange, disabled }: AddressSelectProps)
   const [isOpen, setIsOpen] = useState(false)
 
   const selectedAccount = MOCK_ACCOUNTS.find(a => a.address === value)
-
-  const containerStyle: React.CSSProperties = {
-    position: 'relative',
-  }
-
-  const buttonStyle: React.CSSProperties = {
-    width: '100%',
-    padding: '12px 16px',
-    fontSize: '14px',
-    border: '2px solid #e5e7eb',
-    borderRadius: '8px',
-    backgroundColor: disabled ? '#f9fafb' : 'white',
-    cursor: disabled ? 'not-allowed' : 'pointer',
-    textAlign: 'left',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  }
-
-  const dropdownStyle: React.CSSProperties = {
-    position: 'absolute',
-    top: '100%',
-    left: 0,
-    right: 0,
-    marginTop: '4px',
-    backgroundColor: 'white',
-    border: '2px solid #e5e7eb',
-    borderRadius: '8px',
-    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-    zIndex: 50,
-    maxHeight: '300px',
-    overflowY: 'auto',
-  }
-
-  const groupLabelStyle: React.CSSProperties = {
-    padding: '8px 12px',
-    fontSize: '11px',
-    fontWeight: 700,
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
-    color: '#6b7280',
-    backgroundColor: '#f9fafb',
-    borderBottom: '1px solid #e5e7eb',
-  }
-
-  const getOptionStyle = (_account: MockAccount): React.CSSProperties => ({
-    padding: '10px 12px',
-    cursor: 'pointer',
-    borderBottom: '1px solid #f3f4f6',
-    transition: 'background-color 0.15s',
-  })
-
-  const optionLabelStyle: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    marginBottom: '4px',
-  }
-
-  const addressStyle: React.CSSProperties = {
-    fontFamily: 'monospace',
-    fontSize: '12px',
-    color: '#6b7280',
-  }
-
-  const getBadgeStyle = (type: AccountType): React.CSSProperties => ({
-    padding: '2px 6px',
-    fontSize: '10px',
-    fontWeight: 600,
-    borderRadius: '4px',
-    backgroundColor: TYPE_COLORS[type].bg,
-    color: TYPE_COLORS[type].text,
-    border: `1px solid ${TYPE_COLORS[type].border}`,
-  })
 
   const handleSelect = (account: MockAccount) => {
     onChange(account.address)
@@ -122,66 +49,84 @@ export function AddressSelect({ value, onChange, disabled }: AddressSelectProps)
   const typeOrder: AccountType[] = ['eoa', 'contract', 'invalid', 'blacklisted', 'sanctioned']
 
   return (
-    <div style={containerStyle}>
+    <Box className="relative">
       <button
         type="button"
-        style={buttonStyle}
+        className={`w-full p-3 text-sm border-2 border-gray-200 rounded-lg text-left flex justify-between items-center ${
+          disabled ? 'bg-gray-50 cursor-not-allowed' : 'bg-white cursor-pointer'
+        }`}
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
       >
         {selectedAccount ? (
-          <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontWeight: 500 }}>{selectedAccount.label}</span>
-            <span style={getBadgeStyle(selectedAccount.type)}>
+          <Box className="flex" gap={2}>
+            <Text variant={TextVariant.BodySm} fontWeight={FontWeight.Medium}>
+              {selectedAccount.label}
+            </Text>
+            <span className={`px-2 py-0.5 text-xs font-semibold rounded border ${TYPE_COLORS[selectedAccount.type]}`}>
               {TYPE_LABELS[selectedAccount.type]}
             </span>
-          </span>
+          </Box>
         ) : (
-          <span style={{ color: '#9ca3af' }}>Select recipient...</span>
+          <Text variant={TextVariant.BodySm} color={TextColor.TextMuted}>
+            Select recipient...
+          </Text>
         )}
-        <span style={{ color: '#9ca3af' }}>{isOpen ? '▲' : '▼'}</span>
+        <Text variant={TextVariant.BodySm} color={TextColor.TextMuted}>
+          {isOpen ? '▲' : '▼'}
+        </Text>
       </button>
 
       {isOpen && (
-        <div style={dropdownStyle}>
+        <Box className="absolute top-full left-0 right-0 mt-1 bg-white border-2 border-gray-200 rounded-lg shadow-xl z-50 max-h-80 overflow-y-auto">
           {typeOrder.map(type => {
             const accounts = groupedAccounts[type]
             if (!accounts?.length) return null
 
             return (
-              <div key={type}>
-                <div style={groupLabelStyle}>
-                  {TYPE_LABELS[type]} Addresses
-                </div>
-                {accounts.map(account => (
-                  <div
-                    key={account.address}
-                    style={getOptionStyle(account)}
-                    onClick={() => handleSelect(account)}
-                    onMouseEnter={e => {
-                      e.currentTarget.style.backgroundColor = '#f3f4f6'
-                    }}
-                    onMouseLeave={e => {
-                      e.currentTarget.style.backgroundColor = 'white'
-                    }}
+              <Box key={type}>
+                <Box className="py-2 px-3 border-b border-gray-200 bg-gray-50">
+                  <Text
+                    variant={TextVariant.BodyXs}
+                    fontWeight={FontWeight.Bold}
+                    color={TextColor.TextMuted}
+                    className="uppercase tracking-wider"
                   >
-                    <div style={optionLabelStyle}>
-                      <span style={{ fontWeight: 500 }}>{account.label}</span>
-                      <span style={getBadgeStyle(account.type)}>
+                    {TYPE_LABELS[type]} Addresses
+                  </Text>
+                </Box>
+                {accounts.map(account => (
+                  <Box
+                    key={account.address}
+                    className="py-2.5 px-3 cursor-pointer border-b border-gray-100 transition-colors hover:bg-gray-50"
+                    onClick={() => handleSelect(account)}
+                  >
+                    <Box className="flex" gap={2} marginBottom={1}>
+                      <Text variant={TextVariant.BodySm} fontWeight={FontWeight.Medium}>
+                        {account.label}
+                      </Text>
+                      <span className={`px-2 py-0.5 text-xs font-semibold rounded border ${TYPE_COLORS[account.type]}`}>
                         {TYPE_LABELS[account.type]}
                       </span>
-                    </div>
-                    <div style={addressStyle}>{formatAddress(account.address)}</div>
-                    <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '2px' }}>
+                    </Box>
+                    <Text
+                      variant={TextVariant.BodyXs}
+                      color={TextColor.TextMuted}
+                      fontFamily={FontFamily.Default}
+                      className="font-mono"
+                    >
+                      {formatAddress(account.address)}
+                    </Text>
+                    <Text variant={TextVariant.BodyXs} color={TextColor.TextMuted} className="mt-0.5">
                       {account.description}
-                    </div>
-                  </div>
+                    </Text>
+                  </Box>
                 ))}
-              </div>
+              </Box>
             )
           })}
-        </div>
+        </Box>
       )}
-    </div>
+    </Box>
   )
 }
