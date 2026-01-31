@@ -226,6 +226,56 @@ function MyComponent() {
 
 ---
 
+## Team Velocity Impact
+
+### Engineering Team Velocity
+
+| Factor | mm-monad_01 | mm-imperative_01 |
+|--------|-------------|------------------|
+| **Time to first feature** | Slower (abstractions upfront) | Faster (direct implementation) |
+| **Time to add similar feature** | Faster (reuse primitives) | Same (duplicate patterns) |
+| **Onboarding new devs** | Steeper curve (learn patterns) | Easier (familiar React) |
+| **Code review speed** | Faster (isolated units) | Slower (larger PRs) |
+| **Debugging time** | Easier (pure functions) | Harder (stateful logic) |
+| **Cross-team handoffs** | Smoother (clear contracts) | Friction (implicit assumptions) |
+
+The velocity difference is most visible when comparing "documenting what's needed" vs "implementing it" - monadic delivered a working cross-platform adapter system while imperative produced documentation only.
+
+### Design Team Velocity
+
+| Factor | mm-monad_01 | mm-imperative_01 |
+|--------|-------------|------------------|
+| **Component consistency** | High (primitives enforce patterns) | Medium (varies by developer) |
+| **Design token usage** | Centralized via adapters | Scattered inline references |
+| **Theme implementation** | Pure operations, easily verified | Coupled to React lifecycle |
+| **New variant creation** | Add to style functors | Copy-paste existing styles |
+| **Design system updates** | Single adapter change | Hunt for all usages |
+
+### Velocity Trade-offs
+
+**mm-monad_01 velocity pattern:**
+- Day 1-5: Slower (building primitives)
+- Day 5-15: Matching velocity (using primitives)
+- Day 15+: Faster velocity (compounding reuse)
+
+**mm-imperative_01 velocity pattern:**
+- Day 1-5: Faster (shipping directly)
+- Day 5-15: Matching velocity (some duplication)
+- Day 15+: Slower velocity (tech debt accumulates)
+
+### Time to Working Implementation
+
+| Task | mm-monad_01 | mm-imperative_01 |
+|------|-------------|------------------|
+| A: Input | Working | Working |
+| B: AddressSelect | Working + reusable Dropdown | Working |
+| C: Dark Mode | Working + system preference | Working |
+| D: Cross-Platform | **Working on iOS simulator** | **Cannot achieve** |
+
+The cross-platform task demonstrates the velocity cliff: imperative approach hits a wall requiring architectural rewrite, while monadic approach extends naturally.
+
+---
+
 ## Summary: Key Questions Answered
 
 ### 1. Does the DS itself provide enough abstraction?
