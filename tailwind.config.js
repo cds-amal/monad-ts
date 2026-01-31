@@ -1,6 +1,8 @@
+import designSystemPreset from '@metamask/design-system-tailwind-preset';
+
 /** @type {import('tailwindcss').Config} */
 export default {
-  presets: ['@metamask/design-system-tailwind-preset'],
+  presets: [designSystemPreset],
   content: [
     './index.html',
     './src/**/*.{js,ts,jsx,tsx}',
