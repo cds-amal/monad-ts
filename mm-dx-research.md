@@ -253,6 +253,232 @@ src/
 
 ---
 
+## Code Samples: Overhead vs Payoff
+
+This section provides concrete code examples demonstrating the functional approach's overhead and corresponding payoff.
+
+### The Overhead: Entry Point Setup
+
+**Functional (main.tsx) - 33 LOC:**
+```typescript
+import { EnvironmentProvider, createEnvironment } from './environment'
+import { ThemeProvider } from './theme/useTheme'
+import { FeatureFlagsProvider } from './features'
+import { ServicesProvider } from './services/ServicesContext'
+import { AdapterProvider } from './adapters'
+
+const environment = createEnvironment(
+  import.meta.env.DEV ? 'development' : 'production',
+  'web'
+)
+
+createRoot(document.getElementById('root')!).render(
+  <EnvironmentProvider environment={environment}>
+    <ThemeProvider>
+      <FeatureFlagsProvider>
+        <ServicesProvider services={defaultServices}>
+          <AdapterProvider adapter={webAdapter}>
+            <App />
+          </AdapterProvider>
+        </ServicesProvider>
+      </FeatureFlagsProvider>
+    </ThemeProvider>
+  </EnvironmentProvider>
+)
+```
+
+**Imperative (hypothetical) - 8 LOC:**
+```typescript
+import App from './App'
+
+createRoot(document.getElementById('root')!).render(
+  <App />
+)
+```
+
+**Overhead cost:** +25 LOC at entry point, 5 context providers to understand.
+
+---
+
+### The Payoff: Component Consumption
+
+**Functional component hooks:**
+```typescript
+export function FlaggedAddressTooltip({ address }: Props) {
+  // 4 hooks provide all dependencies - mockable, swappable, testable
+  const { Box, Text, Pressable } = usePrimitives()      // UI primitives
+  const { getFlagDetails } = useServices()              // Business logic
+  const enabled = useFeatureFlag('enableFlaggedAddressExplanation')  // Feature toggle
+  const { isDev } = useEnvironment()                    // Environment info
+
+  if (!enabled) return null
+  // ... render using injected dependencies
+}
+```
+
+**Imperative equivalent:**
+```typescript
+export function FlaggedAddressTooltip({ address }: Props) {
+  // Direct imports - hardcoded, not mockable without jest.mock()
+  import { Box, Text } from '@metamask/design-system-react'
+  import { getFlagDetails } from '../services/mockAccounts'
+
+  // Scattered environment checks
+  const enabled = localStorage.getItem('enableFlaggedAddressExplanation') !== 'false'
+  const isDev = process.env.NODE_ENV !== 'production'  // or import.meta.env.DEV?
+
+  if (!enabled) return null
+  // ... render with hardcoded dependencies
+}
+```
+
+**Payoff:** Functional components are pure functions of their injected dependencies. Testing requires only wrapping in providers with mock values, not module mocking.
+
+---
+
+### The Payoff: Platform-Specific Implementation
+
+Both files export the same interface but implement platform-appropriate UX:
+
+**Web (FlaggedAddressTooltip.tsx) - 108 LOC:**
+```typescript
+// Click to reveal tooltip positioned below trigger
+export function FlaggedAddressTooltip({ address, onDismiss }: Props) {
+  const { Box, Text, Pressable } = usePrimitives()
+  const { getFlagDetails } = useServices()
+  const enabled = useFeatureFlag('enableFlaggedAddressExplanation')
+  const [showDetails, setShowDetails] = useState(false)
+  const tooltipRef = useRef<HTMLDivElement>(null)
+
+  // Click-outside handling for web
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (tooltipRef.current && !tooltipRef.current.contains(event.target as Node)) {
+        setShowDetails(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showDetails])
+
+  if (!enabled) return null
+
+  return (
+    <Box style={{ position: 'relative' }}>
+      <Pressable onPress={() => setShowDetails(!showDetails)}>
+        <Text>ⓘ</Text>
+      </Pressable>
+      {showDetails && (
+        <div ref={tooltipRef}>
+          <Box style={{ position: 'absolute', top: '100%' }}>
+            {/* Tooltip content */}
+          </Box>
+        </div>
+      )}
+    </Box>
+  )
+}
+```
+
+**iOS (FlaggedAddressTooltip.native.tsx) - 175 LOC:**
+```typescript
+// Tap to reveal modal card sliding from top, swipe to dismiss
+export function FlaggedAddressTooltip({ address, onDismiss }: Props) {
+  const { Box, Text, Pressable } = usePrimitives()  // Same hooks!
+  const { getFlagDetails } = useServices()           // Same hooks!
+  const enabled = useFeatureFlag('enableFlaggedAddressExplanation')  // Same hooks!
+
+  const slideAnim = useRef(new Animated.Value(-CARD_HEIGHT)).current
+  const panResponder = useRef(PanResponder.create({
+    onMoveShouldSetPanResponder: (_, gesture) => gesture.dy < -10,
+    onPanResponderRelease: (_, gesture) => {
+      if (gesture.dy < -30) hideCard()
+    },
+  })).current
+
+  if (!enabled) return null
+
+  return (
+    <>
+      <Pressable onPress={showCard} onLongPress={dismiss}>
+        <Text>⚠</Text>
+      </Pressable>
+      <Modal visible={showCard} transparent>
+        <Animated.View
+          {...panResponder.panHandlers}
+          style={{ transform: [{ translateY: slideAnim }] }}
+        >
+          {/* Card content */}
+        </Animated.View>
+      </Modal>
+    </>
+  )
+}
+```
+
+**Key observation:** The component interface is identical. The consuming code (`AddressSelect.tsx`) imports `FlaggedAddressTooltip` without knowing which implementation it gets—Metro bundles `.native.tsx`, Vite bundles `.tsx`.
+
+---
+
+### The Payoff: What Imperative Cross-Platform Would Require
+
+```typescript
+// Imperative approach would need inline platform conditionals
+export function FlaggedAddressTooltip({ address }: Props) {
+  const isNative = Platform.OS === 'ios' || Platform.OS === 'android'
+
+  // Can't use MDS components on native - they're web-only
+  const Box = isNative ? View : MDSBox
+  const Text = isNative ? RNText : MDSText
+
+  // Different interaction patterns
+  if (isNative) {
+    return (
+      <TouchableOpacity onPress={showModal} onLongPress={dismiss}>
+        {/* Native modal implementation */}
+      </TouchableOpacity>
+    )
+  }
+
+  return (
+    <div onClick={toggleTooltip}>
+      {/* Web tooltip implementation */}
+    </div>
+  )
+}
+```
+
+**Problems with imperative cross-platform:**
+1. Single file becomes unmaintainable with both implementations
+2. Platform checks scattered throughout render logic
+3. Can't tree-shake unused platform code
+4. MDS imports break native bundle (crypto dependencies)
+5. Testing requires mocking `Platform.OS`
+
+---
+
+### Summary: Overhead Budget
+
+| Infrastructure | LOC | Purpose |
+|----------------|-----|---------|
+| EnvironmentContext | 35 | Cross-platform `isDev`, `platform` |
+| FeatureFlagsContext | 35 | Runtime feature toggles |
+| ServicesContext | 40 | Dependency injection |
+| AdapterContext | 45 | UI primitive abstraction |
+| **Total overhead** | **~155** | **Enables all payoffs below** |
+
+| Payoff | Functional | Imperative |
+|--------|------------|------------|
+| Add iOS support | Create `.native.tsx` files | Rewrite with Platform.OS conditionals |
+| Add feature flag | 1 line in interface + default | Retrofit localStorage or library |
+| Mock for testing | Wrap in provider | jest.mock() each import |
+| Swap service impl | Change provider value | Find/replace imports |
+| Environment check | `useEnvironment().isDev` | `__DEV__` or `import.meta.env.DEV` (platform-specific) |
+
+The 155 LOC infrastructure investment enables capabilities that would require 500+ LOC of scattered conditionals and architectural rework in the imperative approach.
+
+---
+
 ## Conclusions
 
 ### When to Use Functional Patterns
