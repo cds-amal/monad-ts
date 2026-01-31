@@ -1,17 +1,28 @@
+const { brandColor } = require('@metamask/design-tokens');
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   presets: [
-    require('@metamask/design-system-tailwind-preset')
+    // eslint-disable-next-line node/global-require
+    require('@metamask/design-system-tailwind-preset'),
   ],
   content: [
     './index.html',
     './src/**/*.{js,ts,jsx,tsx}',
+    // Ensures tailwind classnames are generated for design system components
     './node_modules/@metamask/design-system-react/**/*.{mjs,cjs}',
   ],
   theme: {
-    extend: {
-      // The preset will add design system colors, typography, and shadows
+    // Keep essential semantic colors, remove default palette colors. We want to rely on the colors provided by @metamask/design-system-tailwind-preset
+    colors: {
+      inherit: 'inherit',
+      current: 'currentColor',
+      transparent: 'transparent',
+      black: brandColor.black,
+      white: brandColor.white,
     },
+    fontSize: {}, // This removes all default Tailwind font sizes. We want to rely on the design system font sizes and enforce use of the Text component
+    extend: {},
   },
   plugins: [],
 };
