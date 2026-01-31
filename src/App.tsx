@@ -5,6 +5,7 @@ import { WalletButton } from './components/WalletButton'
 import { TokenList } from './components/TokenList'
 import { TransferForm } from './components/TransferForm'
 import { TransferStatus } from './components/TransferStatus'
+import { ThemeToggle } from './components/ThemeToggle'
 import { Token, TransferResult } from './types'
 
 export default function App() {
@@ -40,12 +41,15 @@ export default function App() {
           <Text variant={TextVariant.HeadingLg} asChild>
             <h1>Token Transfer</h1>
           </Text>
-          <WalletButton
-            wallet={wallet}
-            loading={loading}
-            onConnect={connect}
-            onDisconnect={disconnect}
-          />
+          <Box className="flex" gap={2} alignItems={BoxAlignItems.Center}>
+            <ThemeToggle />
+            <WalletButton
+              wallet={wallet}
+              loading={loading}
+              onConnect={connect}
+              onDisconnect={disconnect}
+            />
+          </Box>
         </Box>
 
         <Box
