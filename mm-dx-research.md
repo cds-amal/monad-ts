@@ -412,6 +412,12 @@ Inline `className` strings work fine for simple cases, but as complexity grows (
 | `225a646` | Add cross-platform adapter system for React Native support |
 | `4b6be04` | Fix iOS: React 19, polyfills, ThemeContext, SafeAreaView |
 
+### mm-monad_02
+| Commit | Description |
+|--------|-------------|
+| `ae200b0` | Fix iOS simulator: React 19, Node polyfills, ThemeContext |
+| `fe9345f` | Mitigate code review findings (Phase 1-4) |
+
 ### mm-imperative_01
 | Commit | Description |
 |--------|-------------|
@@ -419,3 +425,185 @@ Inline `className` strings work fine for simple cases, but as complexity grows (
 | `efef499` | Refactor AddressSelect: extract AccountBadge and utilities |
 | `80fd6e6` | Add dark mode with simple useTheme hook |
 | `ceb4886` | Document cross-platform challenges and required abstractions |
+
+---
+
+## Code Review: Scaling for 100+ Person Team
+
+The following section documents findings from a code review of `mm-monad_01` focusing on architectural issues that would create friction at scale with a 100+ person engineering team.
+
+### Executive Summary
+
+The codebase demonstrates solid engineering fundamentals—strong typing, functional patterns, and a well-conceived adapter abstraction. However, several architectural decisions would create friction at scale.
+
+---
+
+### High Impact Issues Identified
+
+#### 1. Design Token Duplication
+
+**Problem:** MDS design tokens were hardcoded in `native.tsx` because importing `@metamask/design-tokens` brings crypto dependencies:
+
+```typescript
+// 25+ hardcoded values that can drift from MDS updates
+const lightTheme = {
+  colors: {
+    text: { default: '#121314', alternative: '#686e7d', muted: '#b7bbc8' },
+    // ...
+  }
+}
+```
+
+**Impact:** Two sources of truth. When MetaMask updates their design system, web gets it automatically via MDS components, but native falls out of sync.
+
+#### 2. Validation System Split
+
+**Problem:** Two validation systems coexisted:
+- `ValidationResult` monad in `Input.tsx` (excellent composable pattern)
+- `validateAddress()` in `mockAccounts.ts` returning `{ valid: boolean; error?: string }`
+
+These weren't compatible, forcing manual bridging in components.
+
+#### 3. Service Coupling
+
+**Problem:** Components directly imported service implementations:
+```typescript
+import { web3Service } from '../services/mockWeb3'
+import { validateAddress, getAccountByAddress } from '../services/mockAccounts'
+```
+
+This creates testing friction, prevents team parallelization, and makes it impossible to swap implementations per environment.
+
+#### 4. Code Duplication
+
+- `formatAddress` duplicated in `mockWeb3.ts` and `accountStyles.ts` with different implementations
+- Pressed state handling repeated in Pressable, Button, and IconButton
+- Color mapping functions structurally identical
+
+#### 5. Silent Context Fallback
+
+`useTheme()` silently returned a default when `ThemeProvider` was missing, hiding bugs in development.
+
+---
+
+### Mitigations Implemented (mm-monad_02)
+
+#### Phase 1: Unified Validation System
+
+Created `src/validation/` module with:
+- `index.ts` - Shared `ValidationResult` monad and `Validators`
+- `addressValidation.ts` - Address validation returning `AddressValidationResult` (extends `ValidationResult`)
+
+All consumers now import from a single source:
+```typescript
+import { ValidationResult, Validators } from '../validation'
+import { validateAddress } from '../validation/addressValidation'
+```
+
+**Files changed:** 6 | **New files:** 2
+
+#### Phase 2: Service Injection via Context
+
+Created dependency injection system:
+- `src/services/types.ts` - `Services` interface definition
+- `src/services/ServicesContext.tsx` - `ServicesProvider` and `useServices()` hook
+- `src/services/defaultServices.ts` - Default implementation
+
+Components now consume services via context:
+```typescript
+const { transfer, validateAddress, formatAddress } = useServices()
+```
+
+**Benefits:**
+- Components are testable with mock services
+- Teams can work independently on UI vs service layers
+- Can swap implementations per environment
+
+**Files changed:** 8 | **New files:** 3
+
+#### Phase 3: Automated Token Sync
+
+Created build-time token extraction:
+- `scripts/extract-tokens.js` - Reads from `@metamask/design-tokens` at build time
+- `src/adapters/tokens.native.ts` - Generated token file with `ThemeTokens` interface
+
+Package.json scripts updated:
+```json
+{
+  "prebuild": "node scripts/extract-tokens.js",
+  "build": "pnpm prebuild && tsc -b && vite build",
+  "native": "pnpm prebuild && expo start"
+}
+```
+
+**Benefits:**
+- Single source of truth for design tokens
+- Native tokens stay in sync with MDS updates
+- No runtime crypto dependency issues
+
+**Files changed:** 3 | **New files:** 2
+
+#### Phase 4: Quick Fixes
+
+1. **Fixed silent context fallback** - Now throws in `__DEV__`, warns in production
+2. **Removed `formatAddress` duplication** - Single source in `accountStyles.ts`
+3. **Removed backwards compatibility shim** - Deleted unused `toggle` export
+4. **Extracted `usePressedState` hook** - Reusable pressed state management
+5. **Created `createColorMapper` utility** - Generic factory for color mapping functions
+
+**Files changed:** 4
+
+---
+
+### Severity Summary
+
+| Issue | Severity | Status |
+|-------|----------|--------|
+| Design token duplication | High | ✅ Fixed (Phase 3) |
+| Validation system split | High | ✅ Fixed (Phase 1) |
+| Service coupling | High | ✅ Fixed (Phase 2) |
+| formatAddress duplication | Low | ✅ Fixed (Phase 4) |
+| Pressed state duplication | Low | ✅ Fixed (Phase 4) |
+| Silent context fallback | Medium | ✅ Fixed (Phase 4) |
+| `as never` casts | Medium | Deferred |
+| Dropdown positioning | Medium | Deferred |
+| Missing tests | High | Deferred |
+
+---
+
+### Deferred Items (Higher Effort)
+
+1. **Test infrastructure** - Add vitest/jest, set up component testing
+2. **Dropdown collision detection** - Portal-based solution for viewport boundaries
+3. **Fix `as never` casts** - Requires adapter type alignment with MDS
+4. **Adapter code generation** - Generate mapping tables from schema
+
+---
+
+### Architecture After Mitigations
+
+```
+src/
+├── validation/              # Unified validation system
+│   ├── index.ts            # ValidationResult monad + Validators
+│   └── addressValidation.ts # Address-specific validation
+├── services/
+│   ├── types.ts            # Services interface
+│   ├── ServicesContext.tsx # DI container
+│   ├── defaultServices.ts  # Default implementation
+│   ├── mockWeb3.ts         # Web3 mock (no formatAddress)
+│   └── mockAccounts.ts     # Account data (no validateAddress)
+├── adapters/
+│   ├── tokens.native.ts    # Generated from MDS (prebuild)
+│   └── native.tsx          # Uses generated tokens
+└── theme/
+    └── useTheme.tsx        # Throws in dev, warns in prod
+scripts/
+└── extract-tokens.js       # Token extraction script
+```
+
+This structure supports:
+- **Team parallelization** - UI, services, and validation can evolve independently
+- **Testing** - Services mockable, validation composable, pure functions isolated
+- **Design sync** - Tokens auto-generated from MDS at build time
+- **Debugging** - Errors surface immediately in development
