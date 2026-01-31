@@ -2,6 +2,18 @@
 
 This document tracks developer experience findings comparing imperative (inline styles + direct DOM) and monadic (adapter-based) architectures.
 
+## Project Context
+
+This project starts with the **baseline MetaMask design system packages** that mobile and extension both use:
+- `@metamask/design-system-react` - Component library
+- `@metamask/design-system-tailwind-preset` - Tailwind configuration
+- `@metamask/design-tokens` - Design tokens (colors, typography, etc.)
+
+We're testing **additional guidelines in the form of a monad system** on top of this baseline to explore:
+- How architectural patterns affect cross-platform development
+- Trade-offs between direct control (imperative) vs abstraction (monadic)
+- Developer experience implications for team scalability
+
 ---
 
 ## Task 3: Cross-Platform Support (React Native)
