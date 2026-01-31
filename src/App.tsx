@@ -6,71 +6,75 @@ import { TransferForm } from './components/TransferForm'
 import { TransferStatus } from './components/TransferStatus'
 import { ThemeToggle } from './components/ThemeToggle'
 import { ThemeProvider, useColors } from './context/ThemeContext'
+import { useRender, useStyle } from './context/AdapterContext'
 import { Token, TransferResult } from './types'
 
 function AppContent() {
+  const { Box, Text } = useRender()
+  const { normalize } = useStyle()
   const c = useColors()
   const { wallet, tokens, loading, connect, disconnect, refreshTokens } = useWallet()
   const [selectedToken, setSelectedToken] = useState<Token | null>(null)
   const [transferResult, setTransferResult] = useState<TransferResult | null>(null)
 
-  const appStyle: React.CSSProperties = {
-    minHeight: '100vh',
+  const appStyle = normalize({
+    flex: 1,
     backgroundColor: c.bg,
-    padding: '40px 20px',
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-    transition: 'background-color 0.2s ease',
-  }
+    padding: 20,
+    paddingTop: 60,
+  })
 
-  const containerStyle: React.CSSProperties = {
-    maxWidth: '480px',
-    margin: '0 auto',
-  }
+  const containerStyle = normalize({
+    maxWidth: 480,
+    width: '100%',
+    alignSelf: 'center',
+  })
 
-  const headerStyle: React.CSSProperties = {
-    display: 'flex',
+  const headerStyle = normalize({
+    flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '32px',
-    gap: '12px',
-  }
+    marginBottom: 32,
+    gap: 12,
+  })
 
-  const titleStyle: React.CSSProperties = {
-    fontSize: '24px',
-    fontWeight: 700,
+  const titleStyle = normalize({
+    fontSize: 24,
+    fontWeight: '700',
     color: c.text,
-    margin: 0,
-  }
+  })
 
-  const headerRightStyle: React.CSSProperties = {
-    display: 'flex',
+  const headerRightStyle = normalize({
+    flexDirection: 'row',
     alignItems: 'center',
-    gap: '12px',
-  }
+    gap: 12,
+  })
 
-  const cardStyle: React.CSSProperties = {
+  const cardStyle = normalize({
     backgroundColor: c.bgCard,
-    borderRadius: '16px',
-    padding: '24px',
-    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-    transition: 'background-color 0.2s ease',
-  }
+    borderRadius: 16,
+    padding: 24,
+  })
 
-  const sectionStyle: React.CSSProperties = {
-    marginBottom: '24px',
-  }
+  const sectionStyle = normalize({
+    marginBottom: 24,
+  })
 
-  const dividerStyle: React.CSSProperties = {
-    height: '1px',
+  const dividerStyle = normalize({
+    height: 1,
     backgroundColor: c.border,
-    margin: '24px 0',
-  }
+    marginVertical: 24,
+  })
 
-  const emptyStateStyle: React.CSSProperties = {
-    textAlign: 'center',
-    padding: '48px 24px',
+  const emptyStateStyle = normalize({
+    alignItems: 'center',
+    padding: 48,
+  })
+
+  const emptyTextStyle = normalize({
     color: c.textSecondary,
-  }
+    textAlign: 'center',
+  })
 
   const handleTransferComplete = (result: TransferResult) => {
     setTransferResult(result)
@@ -84,11 +88,11 @@ function AppContent() {
   }
 
   return (
-    <div style={appStyle}>
-      <div style={containerStyle}>
-        <header style={headerStyle}>
-          <h1 style={titleStyle}>Token Transfer</h1>
-          <div style={headerRightStyle}>
+    <Box style={appStyle}>
+      <Box style={containerStyle}>
+        <Box style={headerStyle}>
+          <Text style={titleStyle}>Token Transfer</Text>
+          <Box style={headerRightStyle}>
             <ThemeToggle />
             <WalletButton
               wallet={wallet}
@@ -96,34 +100,36 @@ function AppContent() {
               onConnect={connect}
               onDisconnect={disconnect}
             />
-          </div>
-        </header>
+          </Box>
+        </Box>
 
-        <div style={cardStyle}>
+        <Box style={cardStyle}>
           {!wallet ? (
-            <div style={emptyStateStyle}>
-              Connect your wallet to start transferring tokens
-            </div>
+            <Box style={emptyStateStyle}>
+              <Text style={emptyTextStyle}>
+                Connect your wallet to start transferring tokens
+              </Text>
+            </Box>
           ) : (
             <>
               {transferResult && (
-                <div style={sectionStyle}>
+                <Box style={sectionStyle}>
                   <TransferStatus
                     result={transferResult}
                     onDismiss={() => setTransferResult(null)}
                   />
-                </div>
+                </Box>
               )}
 
-              <div style={sectionStyle}>
+              <Box style={sectionStyle}>
                 <TokenList
                   tokens={tokens}
                   selectedToken={selectedToken}
                   onSelectToken={setSelectedToken}
                 />
-              </div>
+              </Box>
 
-              <div style={dividerStyle} />
+              <Box style={dividerStyle} />
 
               <TransferForm
                 token={selectedToken}
@@ -131,9 +137,9 @@ function AppContent() {
               />
             </>
           )}
-        </div>
-      </div>
-    </div>
+        </Box>
+      </Box>
+    </Box>
   )
 }
 

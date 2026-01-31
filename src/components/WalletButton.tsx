@@ -1,6 +1,7 @@
 import { Wallet } from '../types'
 import { web3Service } from '../services/mockWeb3'
 import { useColors } from '../context/ThemeContext'
+import { useRender, useStyle } from '../context/AdapterContext'
 
 interface WalletButtonProps {
   wallet: Wallet | null
@@ -10,59 +11,73 @@ interface WalletButtonProps {
 }
 
 export function WalletButton({ wallet, loading, onConnect, onDisconnect }: WalletButtonProps) {
+  const { Box, Text, Pressable } = useRender()
+  const { normalize, monoFont } = useStyle()
   const c = useColors()
 
-  const buttonStyle: React.CSSProperties = {
-    padding: '12px 24px',
-    fontSize: '16px',
-    fontWeight: 600,
-    border: 'none',
-    borderRadius: '8px',
-    cursor: loading ? 'wait' : 'pointer',
-    transition: 'all 0.2s ease',
+  const buttonStyle = normalize({
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
     backgroundColor: wallet ? c.error : c.primary,
+  })
+
+  const buttonTextStyle = normalize({
+    fontSize: 16,
+    fontWeight: '600',
     color: 'white',
-  }
+    textAlign: 'center',
+  })
 
-  const containerStyle: React.CSSProperties = {
-    display: 'flex',
+  const containerStyle = normalize({
+    flexDirection: 'row',
     alignItems: 'center',
-    gap: '12px',
-  }
+    gap: 12,
+  })
 
-  const addressStyle: React.CSSProperties = {
-    padding: '8px 16px',
+  const addressStyle = normalize({
+    paddingVertical: 8,
+    paddingHorizontal: 16,
     backgroundColor: c.bgHover,
-    borderRadius: '8px',
-    fontFamily: 'monospace',
-    fontSize: '14px',
+    borderRadius: 8,
+  })
+
+  const addressTextStyle = normalize({
+    fontFamily: monoFont(),
+    fontSize: 14,
     color: c.text,
-  }
+  })
 
   if (wallet) {
     return (
-      <div style={containerStyle}>
-        <span style={addressStyle}>
-          {web3Service.formatAddress(wallet.address)}
-        </span>
-        <button
+      <Box style={containerStyle}>
+        <Box style={addressStyle}>
+          <Text style={addressTextStyle}>
+            {web3Service.formatAddress(wallet.address)}
+          </Text>
+        </Box>
+        <Pressable
           style={buttonStyle}
-          onClick={onDisconnect}
+          onPress={onDisconnect}
           disabled={loading}
         >
-          {loading ? 'Disconnecting...' : 'Disconnect'}
-        </button>
-      </div>
+          <Text style={buttonTextStyle}>
+            {loading ? 'Disconnecting...' : 'Disconnect'}
+          </Text>
+        </Pressable>
+      </Box>
     )
   }
 
   return (
-    <button
+    <Pressable
       style={buttonStyle}
-      onClick={onConnect}
+      onPress={onConnect}
       disabled={loading}
     >
-      {loading ? 'Connecting...' : 'Connect Wallet'}
-    </button>
+      <Text style={buttonTextStyle}>
+        {loading ? 'Connecting...' : 'Connect Wallet'}
+      </Text>
+    </Pressable>
   )
 }

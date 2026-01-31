@@ -1,5 +1,6 @@
 import { Token } from '../types'
 import { useColors } from '../context/ThemeContext'
+import { useRender, useStyle } from '../context/AdapterContext'
 
 interface TokenListProps {
   tokens: Token[]
@@ -8,72 +9,69 @@ interface TokenListProps {
 }
 
 export function TokenList({ tokens, selectedToken, onSelectToken }: TokenListProps) {
+  const { Box, Text, Pressable } = useRender()
+  const { normalize } = useStyle()
   const c = useColors()
 
-  const containerStyle: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px',
-  }
-
-  const labelStyle: React.CSSProperties = {
-    fontSize: '14px',
-    fontWeight: 600,
-    color: c.textSecondary,
-    marginBottom: '4px',
-  }
-
-  const getTokenStyle = (token: Token): React.CSSProperties => ({
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '16px',
-    backgroundColor: selectedToken?.symbol === token.symbol ? c.bgSelected : c.bgHover,
-    border: selectedToken?.symbol === token.symbol ? `2px solid ${c.borderSelected}` : '2px solid transparent',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
+  const containerStyle = normalize({
+    gap: 8,
   })
 
-  const tokenInfoStyle: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '4px',
-  }
-
-  const tokenSymbolStyle: React.CSSProperties = {
-    fontSize: '16px',
-    fontWeight: 600,
-    color: c.text,
-  }
-
-  const tokenNameStyle: React.CSSProperties = {
-    fontSize: '12px',
+  const labelStyle = normalize({
+    fontSize: 14,
+    fontWeight: '600',
     color: c.textSecondary,
-  }
+    marginBottom: 4,
+  })
 
-  const balanceStyle: React.CSSProperties = {
-    fontSize: '16px',
-    fontWeight: 500,
+  const getTokenStyle = (token: Token) => normalize({
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: selectedToken?.symbol === token.symbol ? c.bgSelected : c.bgHover,
+    borderWidth: 2,
+    borderColor: selectedToken?.symbol === token.symbol ? c.borderSelected : 'transparent',
+    borderRadius: 8,
+  })
+
+  const tokenInfoStyle = normalize({
+    gap: 4,
+  })
+
+  const tokenSymbolStyle = normalize({
+    fontSize: 16,
+    fontWeight: '600',
     color: c.text,
-  }
+  })
+
+  const tokenNameStyle = normalize({
+    fontSize: 12,
+    color: c.textSecondary,
+  })
+
+  const balanceStyle = normalize({
+    fontSize: 16,
+    fontWeight: '500',
+    color: c.text,
+  })
 
   return (
-    <div style={containerStyle}>
-      <span style={labelStyle}>Select Token</span>
+    <Box style={containerStyle}>
+      <Text style={labelStyle}>Select Token</Text>
       {tokens.map(token => (
-        <div
+        <Pressable
           key={token.symbol}
           style={getTokenStyle(token)}
-          onClick={() => onSelectToken(token)}
+          onPress={() => onSelectToken(token)}
         >
-          <div style={tokenInfoStyle}>
-            <span style={tokenSymbolStyle}>{token.symbol}</span>
-            <span style={tokenNameStyle}>{token.name}</span>
-          </div>
-          <span style={balanceStyle}>{token.balance}</span>
-        </div>
+          <Box style={tokenInfoStyle}>
+            <Text style={tokenSymbolStyle}>{token.symbol}</Text>
+            <Text style={tokenNameStyle}>{token.name}</Text>
+          </Box>
+          <Text style={balanceStyle}>{token.balance}</Text>
+        </Pressable>
       ))}
-    </div>
+    </Box>
   )
 }

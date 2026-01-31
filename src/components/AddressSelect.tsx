@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { MOCK_ACCOUNTS, MockAccount, AccountType } from '../services/mockAccounts'
 import { useColors } from '../context/ThemeContext'
+import { useRender, useStyle } from '../context/AdapterContext'
 
 interface AddressSelectProps {
   value: string
@@ -8,7 +9,6 @@ interface AddressSelectProps {
   disabled?: boolean
 }
 
-// Badge colors stay constant (semantic meaning)
 const TYPE_COLORS: Record<AccountType, { bg: string; text: string; border: string }> = {
   eoa: { bg: '#d1fae5', text: '#065f46', border: '#10b981' },
   contract: { bg: '#dbeafe', text: '#1e40af', border: '#3b82f6' },
@@ -26,85 +26,95 @@ const TYPE_LABELS: Record<AccountType, string> = {
 }
 
 export function AddressSelect({ value, onChange, disabled }: AddressSelectProps) {
+  const { Box, Text, Pressable, ScrollBox } = useRender()
+  const { normalize, monoFont } = useStyle()
   const c = useColors()
   const [isOpen, setIsOpen] = useState(false)
 
   const selectedAccount = MOCK_ACCOUNTS.find(a => a.address === value)
 
-  const containerStyle: React.CSSProperties = {
+  const containerStyle = normalize({
     position: 'relative',
-  }
+    zIndex: isOpen ? 50 : 1,
+  })
 
-  const buttonStyle: React.CSSProperties = {
+  const buttonStyle = normalize({
     width: '100%',
-    padding: '12px 16px',
-    fontSize: '14px',
-    border: `2px solid ${c.border}`,
-    borderRadius: '8px',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderWidth: 2,
+    borderColor: c.border,
+    borderRadius: 8,
     backgroundColor: disabled ? c.bgDisabled : c.bgInput,
-    color: c.text,
-    cursor: disabled ? 'not-allowed' : 'pointer',
-    textAlign: 'left',
-    display: 'flex',
+    flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-  }
+  })
 
-  const dropdownStyle: React.CSSProperties = {
+  const dropdownStyle = normalize({
     position: 'absolute',
     top: '100%',
     left: 0,
     right: 0,
-    marginTop: '4px',
+    marginTop: 4,
     backgroundColor: c.bgCard,
-    border: `2px solid ${c.border}`,
-    borderRadius: '8px',
-    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)',
-    zIndex: 50,
-    maxHeight: '300px',
-    overflowY: 'auto',
-  }
+    borderWidth: 2,
+    borderColor: c.border,
+    borderRadius: 8,
+    maxHeight: 300,
+    overflow: 'hidden',
+  })
 
-  const groupLabelStyle: React.CSSProperties = {
-    padding: '8px 12px',
-    fontSize: '11px',
-    fontWeight: 700,
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
-    color: c.textSecondary,
+  const groupLabelStyle = normalize({
+    paddingVertical: 8,
+    paddingHorizontal: 12,
     backgroundColor: c.bgHover,
-    borderBottom: `1px solid ${c.border}`,
-  }
+    borderBottomWidth: 1,
+    borderBottomColor: c.border,
+  })
 
-  const getOptionStyle = (): React.CSSProperties => ({
-    padding: '10px 12px',
-    cursor: 'pointer',
-    borderBottom: `1px solid ${c.border}`,
-    transition: 'background-color 0.15s',
+  const groupLabelTextStyle = normalize({
+    fontSize: 11,
+    fontWeight: '700',
+    color: c.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  })
+
+  const optionStyle = normalize({
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: c.border,
     backgroundColor: c.bgCard,
   })
 
-  const optionLabelStyle: React.CSSProperties = {
-    display: 'flex',
+  const optionLabelStyle = normalize({
+    flexDirection: 'row',
     alignItems: 'center',
-    gap: '8px',
-    marginBottom: '4px',
-  }
+    gap: 8,
+    marginBottom: 4,
+  })
 
-  const addressStyle: React.CSSProperties = {
-    fontFamily: 'monospace',
-    fontSize: '12px',
+  const addressTextStyle = normalize({
+    fontFamily: monoFont(),
+    fontSize: 12,
     color: c.textSecondary,
-  }
+  })
 
-  const getBadgeStyle = (type: AccountType): React.CSSProperties => ({
-    padding: '2px 6px',
-    fontSize: '10px',
-    fontWeight: 600,
-    borderRadius: '4px',
+  const getBadgeStyle = (type: AccountType) => normalize({
+    paddingVertical: 2,
+    paddingHorizontal: 6,
+    borderRadius: 4,
     backgroundColor: TYPE_COLORS[type].bg,
+    borderWidth: 1,
+    borderColor: TYPE_COLORS[type].border,
+  })
+
+  const getBadgeTextStyle = (type: AccountType) => normalize({
+    fontSize: 10,
+    fontWeight: '600',
     color: TYPE_COLORS[type].text,
-    border: `1px solid ${TYPE_COLORS[type].border}`,
   })
 
   const handleSelect = (account: MockAccount) => {
@@ -126,66 +136,67 @@ export function AddressSelect({ value, onChange, disabled }: AddressSelectProps)
   const typeOrder: AccountType[] = ['eoa', 'contract', 'invalid', 'blacklisted', 'sanctioned']
 
   return (
-    <div style={containerStyle}>
-      <button
-        type="button"
+    <Box style={containerStyle}>
+      <Pressable
         style={buttonStyle}
-        onClick={() => !disabled && setIsOpen(!isOpen)}
+        onPress={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
       >
         {selectedAccount ? (
-          <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontWeight: 500, color: c.text }}>{selectedAccount.label}</span>
-            <span style={getBadgeStyle(selectedAccount.type)}>
-              {TYPE_LABELS[selectedAccount.type]}
-            </span>
-          </span>
+          <Box style={normalize({ flexDirection: 'row', alignItems: 'center', gap: 8 })}>
+            <Text style={normalize({ fontWeight: '500', color: c.text })}>{selectedAccount.label}</Text>
+            <Box style={getBadgeStyle(selectedAccount.type)}>
+              <Text style={getBadgeTextStyle(selectedAccount.type)}>
+                {TYPE_LABELS[selectedAccount.type]}
+              </Text>
+            </Box>
+          </Box>
         ) : (
-          <span style={{ color: c.textMuted }}>Select recipient...</span>
+          <Text style={normalize({ color: c.textMuted })}>Select recipient...</Text>
         )}
-        <span style={{ color: c.textMuted }}>{isOpen ? '▲' : '▼'}</span>
-      </button>
+        <Text style={normalize({ color: c.textMuted })}>{isOpen ? '▲' : '▼'}</Text>
+      </Pressable>
 
       {isOpen && (
-        <div style={dropdownStyle}>
-          {typeOrder.map(type => {
-            const accounts = groupedAccounts[type]
-            if (!accounts?.length) return null
+        <Box style={dropdownStyle}>
+          <ScrollBox style={normalize({ maxHeight: 296 })}>
+            {typeOrder.map(type => {
+              const accounts = groupedAccounts[type]
+              if (!accounts?.length) return null
 
-            return (
-              <div key={type}>
-                <div style={groupLabelStyle}>
-                  {TYPE_LABELS[type]} Addresses
-                </div>
-                {accounts.map(account => (
-                  <div
-                    key={account.address}
-                    style={getOptionStyle()}
-                    onClick={() => handleSelect(account)}
-                    onMouseEnter={e => {
-                      e.currentTarget.style.backgroundColor = c.bgHover
-                    }}
-                    onMouseLeave={e => {
-                      e.currentTarget.style.backgroundColor = c.bgCard
-                    }}
-                  >
-                    <div style={optionLabelStyle}>
-                      <span style={{ fontWeight: 500, color: c.text }}>{account.label}</span>
-                      <span style={getBadgeStyle(account.type)}>
-                        {TYPE_LABELS[account.type]}
-                      </span>
-                    </div>
-                    <div style={addressStyle}>{formatAddress(account.address)}</div>
-                    <div style={{ fontSize: '11px', color: c.textMuted, marginTop: '2px' }}>
-                      {account.description}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )
-          })}
-        </div>
+              return (
+                <Box key={type}>
+                  <Box style={groupLabelStyle}>
+                    <Text style={groupLabelTextStyle}>
+                      {TYPE_LABELS[type]} Addresses
+                    </Text>
+                  </Box>
+                  {accounts.map(account => (
+                    <Pressable
+                      key={account.address}
+                      style={optionStyle}
+                      onPress={() => handleSelect(account)}
+                    >
+                      <Box style={optionLabelStyle}>
+                        <Text style={normalize({ fontWeight: '500', color: c.text })}>{account.label}</Text>
+                        <Box style={getBadgeStyle(account.type)}>
+                          <Text style={getBadgeTextStyle(account.type)}>
+                            {TYPE_LABELS[account.type]}
+                          </Text>
+                        </Box>
+                      </Box>
+                      <Text style={addressTextStyle}>{formatAddress(account.address)}</Text>
+                      <Text style={normalize({ fontSize: 11, color: c.textMuted, marginTop: 2 })}>
+                        {account.description}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </Box>
+              )
+            })}
+          </ScrollBox>
+        </Box>
       )}
-    </div>
+    </Box>
   )
 }

@@ -1,5 +1,6 @@
 import { TransferResult } from '../types'
 import { useColors } from '../context/ThemeContext'
+import { useRender, useStyle } from '../context/AdapterContext'
 
 interface TransferStatusProps {
   result: TransferResult | null
@@ -7,64 +8,66 @@ interface TransferStatusProps {
 }
 
 export function TransferStatus({ result, onDismiss }: TransferStatusProps) {
+  const { Box, Text, Pressable } = useRender()
+  const { normalize, monoFont } = useStyle()
   const c = useColors()
 
   if (!result) return null
 
-  const containerStyle: React.CSSProperties = {
-    padding: '16px',
-    borderRadius: '8px',
+  const containerStyle = normalize({
+    padding: 16,
+    borderRadius: 8,
     backgroundColor: result.success ? c.successBg : c.errorBg,
-    border: `2px solid ${result.success ? c.success : c.error}`,
-    display: 'flex',
+    borderWidth: 2,
+    borderColor: result.success ? c.success : c.error,
+    flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    gap: '12px',
-  }
+    gap: 12,
+  })
 
-  const contentStyle: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '4px',
-  }
+  const contentStyle = normalize({
+    flex: 1,
+    gap: 4,
+  })
 
-  const titleStyle: React.CSSProperties = {
-    fontSize: '16px',
-    fontWeight: 600,
+  const titleStyle = normalize({
+    fontSize: 16,
+    fontWeight: '600',
     color: result.success ? c.successText : c.errorText,
-  }
+  })
 
-  const messageStyle: React.CSSProperties = {
-    fontSize: '14px',
+  const messageStyle = normalize({
+    fontSize: 14,
     color: result.success ? c.successText : c.errorText,
-    fontFamily: result.txHash ? 'monospace' : 'inherit',
-    wordBreak: 'break-all',
-  }
+    fontFamily: result.txHash ? monoFont() : undefined,
+  })
 
-  const dismissStyle: React.CSSProperties = {
-    padding: '4px 8px',
-    fontSize: '14px',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    backgroundColor: 'transparent',
+  const dismissStyle = normalize({
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 4,
+  })
+
+  const dismissTextStyle = normalize({
+    fontSize: 14,
+    fontWeight: '600',
     color: result.success ? c.successText : c.errorText,
-    fontWeight: 600,
-  }
+  })
 
   return (
-    <div style={containerStyle}>
-      <div style={contentStyle}>
-        <span style={titleStyle}>
+    <Box style={containerStyle}>
+      <Box style={contentStyle}>
+        <Text style={titleStyle}>
           {result.success ? 'Transfer Successful!' : 'Transfer Failed'}
-        </span>
-        <span style={messageStyle}>
+        </Text>
+        <Text style={messageStyle}>
           {result.success ? `TX: ${result.txHash}` : result.error}
-        </span>
-      </div>
-      <button style={dismissStyle} onClick={onDismiss}>
-        ✕
-      </button>
-    </div>
+        </Text>
+      </Box>
+      <Pressable style={dismissStyle} onPress={onDismiss}>
+        <Text style={dismissTextStyle}>✕</Text>
+      </Pressable>
+    </Box>
   )
 }
