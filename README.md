@@ -45,14 +45,14 @@ The more interesting experiment: what happens when you're building *on top of* a
 ## Quick Start
 
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm run dev
 ```
 
 For iOS (on mm-monad branches):
 ```bash
 cd ios && pod install && cd ..
-npm run ios
+pnpm run native:ios
 ```
 
 ---
