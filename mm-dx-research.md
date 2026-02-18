@@ -98,17 +98,25 @@ A few things stand out:
 | Service swapping | ✅ Dependency injection | ❌ Direct imports |
 | Unit testability | ✅ Pure functions, isolated | ⚠️ Coupled to React lifecycle |
 
-### Velocity Over Time
+### Velocity Over Time (Measured in Commits)
 
-Here's the thing nobody tells you about "move fast" architectures:
+Here's the thing nobody tells you about "move fast" architectures. We can measure this in commits, not calendar time, because both branches worked through the same task sequence:
 
 ```
-Functional:  [Slower]──────[Match]──────[Faster]────────→
-Imperative:  [Faster]──────[Match]──────[Slower]────────→
-             Day 1         Day 15       Day 30+
+                Task A    Task B    Task C    Task D    Task E    Task F
+Functional:     Input     Dropdown  DarkMode  iOS ✅    Flags ✅   Config ✅
+Imperative:     Input     Refactor  DarkMode  iOS ❌    —         —
 ```
 
-The crossover happens around day 15. After that, functional patterns compound while imperative patterns accumulate debt. (Ask me how I know.)
+```
+Functional:  [Slower]──────[Match]──────[Faster]──────[Compounding]──→
+Imperative:  [Faster]──────[Match]──────[Wall]
+             Commit 1      Commit 3     Commit 4+
+```
+
+The crossover happens around the 4th feature commit. Tasks A through C, both branches deliver (imperative faster). At Task D (cross-platform), imperative produces a document explaining why it can't; functional produces a working iOS app. Tasks E and F don't exist on the imperative branch at all.
+
+After the crossover, functional patterns compound while imperative patterns accumulate debt. Each new feature on the functional branch reuses infrastructure that's already paid for (adapters, contexts, `.native.tsx` resolution). Each new feature on the imperative branch would require retrofitting that infrastructure first.
 
 ---
 
@@ -809,7 +817,7 @@ When it doesn't? Slow CI pipelines that developers learn to circumvent. Flaky te
 | Cognitive patterns | 4 consistent hooks | N patterns (grows with codebase) | ✅ Functional |
 | Onboarding | Learn 4 hooks, apply everywhere | Learn codebase-specific conventions | ✅ Functional |
 
-**What we found:** The crossover point (~day 15) determines alignment. For enterprise timescales (years, not weeks), functional's higher initial cost amortizes to lower total cost. The 4-hook pattern (`usePrimitives`, `useServices`, `useFeatureFlag`, `useEnvironment`) becomes institutional knowledge that transfers across teams.
+**What we found:** The crossover point (~4 feature commits in our study) determines alignment. For enterprise timescales (years, not weeks), functional's higher initial cost amortizes to lower total cost. The 4-hook pattern (`usePrimitives`, `useServices`, `useFeatureFlag`, `useEnvironment`) becomes institutional knowledge that transfers across teams.
 
 #### Velocity-Enabling (Fail Fast, Document Domain)
 
@@ -839,22 +847,22 @@ Adding a flag documents it. Removing a flag produces compile errors at every usa
 |----------|-----------|------------|-------------------|
 | Fast | ✅ Strong | ⚠️ Degrades with scale | Functional |
 | Predictive | ✅ Strong | ❌ Weak (scattered patterns) | Functional |
-| Low Cost | ⚠️ High initial, amortized over time | ✅ Low initial, high marginal | Functional (>15 days) |
+| Low Cost | ⚠️ High initial, amortized over time | ✅ Low initial, high marginal | Functional (>4 features) |
 | Velocity-Enabling | ✅ Strong | ❌ Weak (no guardrails) | Functional |
 
-**The bottom line:** The functional approach aligns with all four properties after the initial investment period (~15 days). The imperative approach only aligns with short-term cost reduction, trading the other three properties for initial velocity.
+**The bottom line:** The functional approach aligns with all four properties after the initial investment period (~4 feature commits). The imperative approach only aligns with short-term cost reduction, trading the other three properties for initial velocity.
 
 ### The Trap
 
-This explains why enterprises often regret choosing imperative patterns for "faster time-to-market." They optimize for the one property (low initial cost) that doesn't matter at enterprise timescales. Here's how it typically goes:
+This explains why enterprises often regret choosing imperative patterns for "faster time-to-market." They optimize for the one property (low initial cost) that doesn't matter at enterprise timescales. We saw this play out in our study, measured in features shipped:
 
-1. **Month 1-3:** Imperative ships faster, team celebrates velocity
-2. **Month 6:** Tests slow down, flakiness increases, "just mock it" becomes culture
-3. **Month 12:** Feature flags exist in 3 implementations, nobody knows which is canonical
-4. **Month 18:** iOS initiative requires "refactoring sprint" that takes a quarter
-5. **Month 24:** Original team has churned, new engineers can't reason about test failures
+1. **Features 1-3** (Input, Refactor, Dark Mode): Imperative ships faster, team celebrates velocity
+2. **Feature 4** (Cross-Platform): Imperative hits a wall. Produces a document instead of a working app. Functional delivers iOS support.
+3. **Features 5-6** (Feature Flags, UI Config): Don't exist on the imperative branch. Would require retrofitting the infrastructure that functional already has.
 
-The functional approach's "slower start" is actually **buying alignment** with the test philosophy properties that matter at scale.
+In a real codebase the pattern continues: feature flags show up in 3 different implementations, nobody knows which is canonical. The iOS initiative requires a "refactoring sprint" that takes a quarter. New engineers can't reason about test failures because the mocking strategy is different in every file.
+
+The functional approach's "slower start" is actually **buying alignment** with the test philosophy properties that matter at scale. And the crossover point is measurable: it's the feature where you first need something the imperative approach didn't build infrastructure for.
 
 ---
 
