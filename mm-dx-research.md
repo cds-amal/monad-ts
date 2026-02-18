@@ -67,6 +67,27 @@ Both approaches use the same MetaMask Design System (MDS) packages:
 | Platforms supported | 2 (Web, iOS) | 1 (Web) | 2x |
 | Files with platform conditionals | 0 | N/A | — |
 
+### Cost Per Task (Functional)
+
+This tells the compounding story. The infrastructure gets built once; each subsequent feature pays less for cross-platform support.
+
+| Task | New Lines | Shared | Web-Only | Native-Only | Modified Files | New Deps |
+|------|-----------|--------|----------|-------------|----------------|----------|
+| A: Input Component | 147 | 147 | 0 | 0 | 1 | 0 |
+| B: AddressSelect Refactor | 65 | 65 | 0 | 0 | 1 | 0 |
+| C: Dark Mode | 85 | 85 | 0 | 0 | 2 | 0 |
+| D: Cross-Platform (iOS) | 567 | 45 | 287 | 235 | 3 | 5 |
+| E: Feature Flags | 318 | 70 | 108 | 175 | 4 | 0 |
+| F: UI Config System | 849 | 215 | 351 | 283 | 6 | 1 |
+
+A few things stand out:
+
+**Shared code is the minority.** Tasks D, E, and F all have more platform-specific code than shared code. That's not a failure of the architecture; it's the architecture doing its job. The shared code (types, context, hooks) defines the *contract*. The platform-specific code implements the *interaction*. A long-press on iOS feels different from a long-press on web, and the code reflects that.
+
+**The cost of going cross-platform.** Task F added 849 lines. If we were web-only, it would have been ~566 (shared + web). The native support cost 283 lines, or about 33% extra. That's the price of the second platform. Compare that to Task D, where the *entire task* was adding the second platform from scratch.
+
+**Marginal cost of the pattern is shrinking.** Task D established the `.native.tsx` pattern and adapter layer (567 lines of infrastructure). Task E reused that pattern (318 lines, but most of it was feature-specific UI). Task F reused it again (849 lines, but that includes a full dialog with 5 property editor types). The infrastructure cost per feature is trending toward zero; what's left is feature complexity.
+
 ### The Squishy Stuff
 
 | Capability | Functional | Imperative |
@@ -213,12 +234,19 @@ That's it. The bundler picks the right file based on platform.
 
 **The problem:** Add a runtime UI configuration system: long-press any configurable component to reveal a dialog for adjusting its properties (variant, size, density, visibility). Changes persist across sessions.
 
-| Metric | Functional |
-|--------|------------|
-| New files | 10 (7 shared, 2 native-specific, 1 web-specific) |
-| Modified files | 5 |
+| Metric | Value |
+|--------|-------|
+| New lines (total) | 849 |
+| New lines (shared) | 215 (types, context, hook, barrel) |
+| New lines (web-only) | 351 (persistence, long-press, dialog) |
+| New lines (native-only) | 283 (persistence, long-press, dialog) |
+| Modified lines (insertions/deletions) | +170 / -78 across 6 files |
+| New files | 11 (4 shared, 4 web-only, 3 native-only) |
+| Modified files | 6 |
 | Platform-specific files | `ConfigDialog.native.tsx`, `LongPressWrapper.native.tsx`, `persistence.native.ts` |
 | Feature-flagged | Yes (`enableUIConfig`) |
+| Reusable hooks created | 3 (`useConfigurable`, `useLongPress`, `useUIConfig`) |
+| New dependency | `@react-native-async-storage/async-storage` (native only) |
 
 **This is the interesting one.** Not because it's hard, but because the first implementation got it wrong, and the failure mode is instructive.
 
