@@ -1,6 +1,6 @@
-# Functional vs Imperative: A Developer Experience Study
+# Evidence Journal: Functional vs Imperative DX Study
 
-**What happens when you try to build cross-platform apps on top of MetaMask's design system?**
+> **Looking for the takeaway?** See [What We Learned](./mm-dx-findings.md) for the distilled findings and recommendations. This document is the evidence journal: per-task implementation details, code samples, architecture deep-dives, and raw data tables.
 
 ---
 
@@ -12,13 +12,7 @@ The short version? Imperative is faster out of the gate, but functional pays off
 
 **The headline finding:** The functional approach needed about 2.6x more code upfront. But here's the thing: it was the *only* approach that could ship iOS support without a major rewrite. The imperative branch? We documented what it would take to get there and then didn't do it, because it would've meant starting over.
 
----
-
-## Our Thesis
-
-> Functional composition patterns create architectural leverage that aligns with how you actually want to test things: fast tests, tests that predict production behavior, tests that don't cost a fortune to maintain, and tests that help you ship faster instead of slowing you down.
-
-That's a mouthful. Let's break it down through five progressively harder tasks.
+The findings doc distills the thesis and key insights; what follows here is the evidence.
 
 ---
 
@@ -53,6 +47,7 @@ Both approaches use the same MetaMask Design System (MDS) packages:
 | D: Cross-Platform (iOS) | High | Does the architecture extend, or do we start over? |
 | E: Feature Flags | High | Runtime config, platform-specific UI |
 | F: UI Config System | High | What happens when you bypass the adapter layer? |
+| G: Close Adapter Gaps | Medium | Can a design directive propagate through layers without rewrites? |
 
 ---
 
@@ -66,6 +61,7 @@ Both approaches use the same MetaMask Design System (MDS) packages:
 | Reusable primitives created | 7 | 1 | 7x |
 | Platforms supported | 2 (Web, iOS) | 1 (Web) | 2x |
 | Files with platform conditionals | 0 | N/A | — |
+| Files changed for design directive (Task G) | 15 (3 logic, 12 mechanical) | N/A (no centralized layer) | — |
 
 ### Cost Per Task (Functional)
 
@@ -79,59 +75,9 @@ This tells the compounding story. The infrastructure gets built once; each subse
 | D: Cross-Platform (iOS) | 567 | 45 | 287 | 235 | 3 | 5 |
 | E: Feature Flags | 318 | 70 | 108 | 175 | 4 | 0 |
 | F: UI Config System | 849 | 215 | 351 | 283 | 6 | 1 |
+| G: Close Adapter Gaps | 140 | 55 | 60 | 45 | 15 | 0 |
 
-A few things stand out:
-
-**Shared code is the minority.** Tasks D, E, and F all have more platform-specific code than shared code. That's not a failure of the architecture; it's the architecture doing its job. The shared code (types, context, hooks) defines the *contract*. The platform-specific code implements the *interaction*. A long-press on iOS feels different from a long-press on web, and the code reflects that.
-
-**The cost of going cross-platform.** Task F added 849 lines. If we were web-only, it would have been ~566 (shared + web). The native support cost 283 lines, or about 33% extra. That's the price of the second platform. Compare that to Task D, where the *entire task* was adding the second platform from scratch.
-
-**Marginal cost of the pattern is shrinking.** Task D established the `.native.tsx` pattern and adapter layer (567 lines of infrastructure). Task E reused that pattern (318 lines, but most of it was feature-specific UI). Task F reused it again (849 lines, but that includes a full dialog with 5 property editor types). The infrastructure cost per feature is trending toward zero; what's left is feature complexity.
-
-### The Squishy Stuff
-
-| Capability | Functional | Imperative |
-|------------|------------|------------|
-| Cross-platform support | ✅ Working iOS app | ❌ Would need a rewrite |
-| Feature flag system | ✅ Context-based, easy to test | ❌ Would need to retrofit |
-| Environment abstraction | ✅ Define once, works everywhere | ❌ Checks scattered all over |
-| Service swapping | ✅ Dependency injection | ❌ Direct imports |
-| Unit testability | ✅ Pure functions, isolated | ⚠️ Coupled to React lifecycle |
-
-### Velocity Over Time (Measured in Commits)
-
-Here's the thing nobody tells you about "move fast" architectures. We can measure this in commits, not calendar time, because both branches worked through the same task sequence:
-
-```mermaid
----
-config:
-    themeVariables:
-        xyChart:
-            plotColorPalette: "#4CAF50, #F44336"
----
-xychart-beta
-    title "Cumulative Features Shipped"
-    x-axis ["A: Input", "B: Refactor", "C: Dark Mode", "D: iOS", "E: Flags", "F: Config"]
-    y-axis "Features Delivered" 0 --> 7
-    line "Functional" [1, 2, 3, 4, 5, 6]
-    line "Imperative" [1, 2, 3, 3, 3, 3]
-```
-
-> **Green:** Functional (keeps shipping; infrastructure compounds with each feature)
->
-> **Red:** Imperative (stalled at feature 4; requesting budget to retrofit architecture)
-
-The Y-axis is cumulative features shipped: the thing PMs and EMs actually track. Both branches worked through the same backlog. The imperative line doesn't crash; it flatlines. That's arguably worse than a cliff: a cliff implies something broke, a flatline implies the approach simply ran out of runway.
-
-```
-                Task A    Task B    Task C    Task D    Task E    Task F
-Functional:     Input     Dropdown  DarkMode  iOS ✅    Flags ✅   Config ✅
-Imperative:     Input     Refactor  DarkMode  iOS ❌    —         —
-```
-
-The crossover happens at the 4th feature commit. Tasks A through C, both branches deliver (imperative faster). At Task D (cross-platform), imperative produces a document explaining why it can't; functional produces a working iOS app. Tasks E and F don't exist on the imperative branch at all.
-
-After the crossover, functional patterns compound while imperative patterns accumulate debt. Each new feature on the functional branch reuses infrastructure that's already paid for (adapters, contexts, `.native.tsx` resolution). Each new feature on the imperative branch would require retrofitting that infrastructure first.
+> For analysis of these numbers (compounding costs, shared code ratios, velocity crossover chart), see [Findings: The Numbers](./mm-dx-findings.md#the-numbers) and [Findings: The Velocity Crossover](./mm-dx-findings.md#the-velocity-crossover).
 
 ---
 
@@ -201,6 +147,8 @@ const getError = () => {
 
 ### Task D: Cross-Platform (iOS)
 
+> **Key finding:** [Cross-platform comes free or requires a rewrite](./mm-dx-findings.md#1-cross-platform-comes-free-or-requires-a-rewrite)
+
 **The problem:** Get the app running on iOS simulator.
 
 | Metric | Functional | Imperative |
@@ -254,6 +202,8 @@ That's it. The bundler picks the right file based on platform.
 ---
 
 ### Task F: UI Config System (Long-Press Configuration Dialog)
+
+> **Key finding:** [Architecture only works if you use it](./mm-dx-findings.md#2-architecture-only-works-if-you-use-it)
 
 **The problem:** Add a runtime UI configuration system: long-press any configurable component to reveal a dialog for adjusting its properties (variant, size, density, visibility). Changes persist across sessions.
 
@@ -365,6 +315,103 @@ This is a tooling cost of the `.native.tsx` convention. The pattern itself is co
 ```
 
 `UIConfigProvider` sits inside `AdapterProvider` (it needs primitives for the dialog) and inside `FeatureFlagsProvider` (it's gated behind `enableUIConfig`).
+
+---
+
+### Task G: Close Adapter Gaps (Design System Compliance)
+
+> **Key findings:** [Adapter surface width determines guideline enforceability](./mm-dx-findings.md#3-adapter-surface-width-determines-guideline-enforceability) and [Design directives propagate structurally, not socially](./mm-dx-findings.md#4-design-directives-propagate-structurally-not-socially)
+
+**The problem:** After Task F, an audit found that 12 of 25 source files had `style` escape hatches: inline `style` props for layout properties (`position`, `flex`, `overflow`, `opacity`, sizing), hex colors in the ConfigDialog sub-editors, and raw `<button>` / `<input>` elements where adapter primitives should be. The design team directive: eliminate the escape hatches by expanding the adapter surface so components don't need to drop down to raw styles for common layout operations.
+
+| Metric | Value |
+|--------|-------|
+| New logic (adapter layer) | ~140 lines across 3 files |
+| Consumer files changed | 12 (all mechanical substitutions) |
+| Hex colors eliminated | 5 (`#0376c9`, `#e7f0f9`, `#bbc0c5`, `#fdf2f2`, `#dc2626` in components; 2 `#121314`/`#f3f5f9` in entry point) |
+| Raw HTML elements replaced | 4 (`<button>` in BooleanEditor, SelectEditor; `<input type="text">` in TextEditor, ColorEditor) |
+| Behavioral changes | 0 (app looks and works identically) |
+| New dependencies | 0 |
+
+**This is the most architecturally revealing task in the study.** Not because it's hard (it's genuinely easy), but because it demonstrates what "centralized change" actually looks like in practice, and what the imperative alternative would cost.
+
+#### What Happened
+
+The adapter's `BoxProps` didn't cover common layout properties: `position`, `flex`, `overflow`, `opacity`, sizing (`width`, `height`, `maxWidth`, etc.), directional borders (`borderBottomWidth`, `borderBottomColor`). So components used `style={{ position: 'relative' }}` as an escape hatch. The design team says: close those gaps.
+
+The fix landed in three layers:
+
+1. **`types.ts`** (+35 lines): Added 23 new props to `BoxProps` and `textAlign` to `TextProps`
+2. **`web.tsx`** (+60 lines): New props pass through to CSS style. Added a `borderColorCSSMap` to resolve semantic border names to CSS custom properties for directional borders
+3. **`native.tsx`** (+45 lines): New props added to `computedStyle`. Directional border colors resolve through the existing `getBorderColor()` helper
+
+After that, every component change was mechanical:
+
+```
+// Before
+<Box style={{ position: 'relative' }}>
+<Box style={{ position: 'absolute', top: '100%', left: 0, zIndex: 50 }}>
+<Box style={{ flex: 1 }}>
+<Text style={{ textAlign: 'center' }}>
+<Box style={{ height: 1 }} backgroundColor="muted" />
+
+// After
+<Box position="relative">
+<Box position="absolute" top="100%" left={0} zIndex={50}>
+<Box flex={1}>
+<Text textAlign="center">
+<Box height={1} backgroundColor="muted" />
+```
+
+The ConfigDialog sub-editors got a bigger cleanup: `<button onClick>` became `<Pressable onPress>` wrapping a `<Box>` with semantic border/background colors. Five hex color literals (chip selected/unselected states) became `borderColor="primary"`, `backgroundColor="primaryMuted"`, `borderColor="default"`. Two `<input type="text">` elements became `<TextInput>` from the adapter.
+
+#### Why This Matters for the Problem Statement
+
+The original problem statement (`PROBLEM_STATEMENT.md`) identifies the core issue: AI tools generate `<div style={{ backgroundColor: '#3b82f6' }}>` instead of `<Box backgroundColor="primary">`. Task G demonstrates that the functional/adapter architecture provides a structural remedy for this problem, not just a stylistic preference.
+
+Here's the thing. The problem statement frames this as a documentation gap: "AI tools default to imperative patterns because they lack design system context." That's true, and `agents.md` addresses it (the AI guidelines doc). But Task G reveals something deeper: **even when the guidelines exist and the AI follows them, the adapter surface determines the boundary between "correct" and "escape hatch."**
+
+Before Task G, an AI following `agents.md` perfectly would still produce `style={{ position: 'relative' }}` because `BoxProps` didn't have a `position` prop. The guidelines say "no inline styles," but the adapter didn't offer a semantic alternative. The AI had two choices: violate the guidelines, or don't build the feature. That's not a documentation problem; it's an architecture problem.
+
+After Task G, the adapter covers the common layout surface. An AI following the guidelines can now express `position`, `flex`, `overflow`, `opacity`, and sizing without ever reaching for `style`. The remaining `style` usages are genuinely platform-specific (shadows, transforms, `position: 'fixed'`, animation), and `agents.md` now documents exactly which escape hatches are acceptable and why.
+
+So, then, what did expanding the adapter surface actually do? It moved the line between "the guidelines are enforceable" and "the guidelines are aspirational." Before: ~60% of layout operations required escape hatches. After: escape hatches are the exception (7 documented cases), not the norm.
+
+The problem statement's "Desired State" table says: "Design team updates brand colors: Design tokens update, all components update automatically." Task G demonstrates the broader version of this: "Design team says 'stop using inline styles for layout': Expand adapter types, all components update mechanically."
+
+#### The Imperative Counterfactual
+
+What would this task look like on the imperative branch? Turns out there's nothing to do, and that's the problem.
+
+In an imperative codebase, there's no adapter layer. Components use MDS `<MDSBox>` directly (or worse, raw `<div>`). The directive "stop using inline styles for layout properties" has no single place to land. It becomes:
+
+1. A code review comment that gets applied inconsistently across PRs
+2. A lint rule that flags violations but can't auto-fix (the "correct" replacement depends on context)
+3. A refactoring sprint that touches the same 12 files but without the guarantee that the changes are mechanical
+
+The functional approach turns a social directive ("please stop doing this") into a structural one ("the type system now supports this; use it"). The social version has a half-life measured in sprints. The structural version is permanent.
+
+#### Effort Distribution: The 3/12 Split
+
+This is the number that matters: **3 files needed new logic, 12 files needed only mechanical substitutions.** That 20/80 split is the adapter architecture doing exactly what it's designed to do. The logic changes (how to map semantic prop names to platform implementations) are centralized. The consumption changes (swap `style` for props) are rote.
+
+In a codebase without adapters, the ratio inverts. Every file's changes require understanding how that component's layout interacts with the platform. There's no single "truth" to update; there are 15 independent decisions about how to express layout intent.
+
+#### What Still Uses `style` (And Why That's Fine)
+
+After Task G, seven categories of `style` usage remain:
+
+| Usage | Why |
+|-------|-----|
+| `position: 'fixed'` (ConfigDialog.tsx overlay) | Not supported in React Native |
+| `boxShadow` / `shadowColor` / `elevation` | Different API on web vs native |
+| `transform: [{ translateY }]` (Input.tsx) | Complex, rare |
+| `marginHorizontal: 'auto'` (App.tsx) | Web centering trick; no RN equivalent |
+| `display: 'inline-flex'` (FlaggedAddressTooltip.tsx) | Web-only concept |
+| `fontSize: 48` on emoji (App.tsx) | One-off sizing, not a text variant |
+| `Animated.View` styles (FlaggedAddressTooltip.native.tsx) | RN animation API |
+
+These are genuinely platform-specific or one-off cases. The `style` prop isn't going away; it's becoming what it should be: an escape hatch for the 5% of cases where semantic props can't express the intent, not a crutch for the 95% where they can.
 
 ---
 
@@ -854,80 +901,31 @@ interface FeatureFlags {
 
 Adding a flag documents it. Removing a flag produces compile errors at every usage. The domain is encoded in types that the compiler enforces.
 
----
-
-### The Scorecard
-
-| Property | Functional | Imperative | Enterprise Winner |
-|----------|-----------|------------|-------------------|
-| Fast | ✅ Strong | ⚠️ Degrades with scale | Functional |
-| Predictive | ✅ Strong | ❌ Weak (scattered patterns) | Functional |
-| Low Cost | ⚠️ High initial, amortized over time | ✅ Low initial, high marginal | Functional (>4 features) |
-| Velocity-Enabling | ✅ Strong | ❌ Weak (no guardrails) | Functional |
-
-**The bottom line:** The functional approach aligns with all four properties after the initial investment period (~4 feature commits). The imperative approach only aligns with short-term cost reduction, trading the other three properties for initial velocity.
-
-### The Trap
-
-This explains why enterprises often regret choosing imperative patterns for "faster time-to-market." They optimize for the one property (low initial cost) that doesn't matter at enterprise timescales. We saw this play out in our study, measured in features shipped:
-
-1. **Features 1-3** (Input, Refactor, Dark Mode): Imperative ships faster, team celebrates velocity
-2. **Feature 4** (Cross-Platform): Imperative hits a wall. Produces a document instead of a working app. Functional delivers iOS support.
-3. **Features 5-6** (Feature Flags, UI Config): Don't exist on the imperative branch. Would require retrofitting the infrastructure that functional already has.
-
-In a real codebase the pattern continues: feature flags show up in 3 different implementations, nobody knows which is canonical. The iOS initiative requires a "refactoring sprint" that takes a quarter. New engineers can't reason about test failures because the mocking strategy is different in every file.
-
-The functional approach's "slower start" is actually **buying alignment** with the test philosophy properties that matter at scale. And the crossover point is measurable: it's the feature where you first need something the imperative approach didn't build infrastructure for.
+> For the scorecard summary, "The Trap" narrative, and conclusions, see [Findings: Testing Alignment Scorecard](./mm-dx-findings.md#6-testing-alignment-scorecard) and [Findings: When to Use Which](./mm-dx-findings.md#when-to-use-which).
 
 ---
 
 ## Conclusions
 
-### When Functional Makes Sense
-
-- Cross-platform requirements exist or are anticipated
-- Team size exceeds 10 engineers
-- Long-term maintainability matters
-- Extensive testing is required
-- Feature flagging or A/B testing is needed
-
-### When Imperative Makes Sense
-
-- Single-platform, web-only application
-- Rapid prototyping or MVP phase
-- Small team (1-5 engineers)
-- Short project lifespan
-- Time-to-first-feature is the only thing that matters
-
-### The realized Insight and framing
-
-The functional approach's "overhead" is actually **infrastructure** that creates both architectural leverage (Tasks A-E) and test philosophy alignment. This dual benefit explains why the 2.6x initial investment yields compounding returns:
-
-| Capability | Functional | Imperative |
-|------------|------------|------------|
-| Add new platform | Add adapter file | Rewrite architecture |
-| Add feature flag | Add to interface | Retrofit flag system |
-| Swap service impl | Change provider | Hunt direct imports |
-| Test component | Mock contexts | Mock modules |
-
-### Our Recommendation
-
-For projects with any of the following characteristics, we recommend the functional approach despite higher initial investment:
-
-1. **Multi-platform ambitions**: Even "web-only for now" often evolves
-2. **Team growth expectations**: Functional patterns scale better with headcount
-3. **Design system integration**: Adapters isolate DS changes from components
-4. **Compliance/audit requirements**: Pure functions are easier to verify
-
-The 2.6x initial investment pays dividends in both architectural capabilities (cross-platform, feature flags) and test philosophy alignment (fast, predictive, low-cost, velocity-enabling).
-
-I think that basically covers it!
+> This evidence journal reports; it doesn't conclude. For the distilled findings, recommendations, and "when to use which" guidance, see [What We Learned](./mm-dx-findings.md).
 
 ---
 
 ## Appendix: Branch History
 
-### mm-monad_03 (Current)
+### mm-monad_05 (Current)
+- Expanded adapter type surface: 23 new BoxProps, textAlign on TextProps
+- Eliminated style escape hatches across 12 consumer files
+- Replaced raw HTML elements in ConfigDialog sub-editors with adapter primitives
+- Replaced hex colors with semantic tokens (components and entry point)
+- Updated agents.md with expanded props and documented acceptable escape hatches
+- Lesson learned: adapter surface width determines whether guidelines are enforceable or aspirational
+
+### mm-monad_04
+- AI agent guidelines (`agents.md`) for design system and adapter architecture
+- Chart legend with descriptive labels for velocity comparison
+
+### mm-monad_03
 - Feature flags infrastructure
 - Environment context for cross-platform mode detection
 - Platform-specific flagged address explanation UI

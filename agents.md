@@ -58,8 +58,8 @@ This is why it works on both web and iOS without platform conditionals in compon
 
 | Primitive | Replaces | Key Props |
 |-----------|----------|-----------|
-| `Box` | `<div>` | `flexDirection`, `gap`, `padding`, `backgroundColor`, `borderColor`, `borderRadius`, `alignItems`, `justifyContent` |
-| `Text` | `<span>`, `<p>`, `<h1>` | `variant` (`headingLg`, `bodyMd`, `bodySm`, etc.), `color`, `fontWeight`, `fontFamily` |
+| `Box` | `<div>` | `flexDirection`, `gap`, `padding`, `backgroundColor`, `borderColor`, `borderRadius`, `alignItems`, `justifyContent`, `position`, `top`/`right`/`bottom`/`left`, `zIndex`, `flex`, `flexWrap`, `flexGrow`, `width`/`height`/`maxWidth`/`minWidth`/`maxHeight`/`minHeight`, `overflow`, `opacity`, `borderBottomWidth`/`borderBottomColor`, `borderTopWidth`/`borderTopColor`, `marginTop` |
+| `Text` | `<span>`, `<p>`, `<h1>` | `variant` (`headingLg`, `bodyMd`, `bodySm`, etc.), `color`, `fontWeight`, `fontFamily`, `textAlign` |
 | `Button` | `<button>` | `variant` (`primary`, `secondary`, `danger`), `size` (`sm`, `md`, `lg`), `onPress`, `loading`, `loadingText`, `disabled` |
 | `Pressable` | `<div onClick>` | `onPress`, `disabled` |
 | `TextInput` | `<input>` | `value`, `onChangeText`, `placeholder`, `type`, `hasError` |
@@ -479,6 +479,24 @@ If you're about to generate any of these, stop and fix it:
 | `fontSize: '14px'` | `variant="bodySm"` (typography system) |
 | `if (Platform.OS === 'web')` | Create `.tsx` / `.native.tsx` file pair |
 
+### Acceptable `style` Escape Hatches
+
+These properties still require the `style` prop because they have no cross-platform equivalent or are platform-specific:
+
+| Usage | Why it stays as `style` |
+|-------|------------------------|
+| `position: 'fixed'` | Not supported in React Native; web-only modal pattern |
+| `boxShadow` / `shadowColor` / `elevation` | Different API on web vs native |
+| `transform: [{ translateY }]` | Complex, rare; not worth abstracting |
+| `marginHorizontal: 'auto'` | Web centering trick; no React Native equivalent |
+| `display: 'inline-flex'` | Web-only concept |
+| `fontSize: 48` on emoji | Not a text variant; one-off emoji sizing |
+| `Animated.View` styles | Animation requires React Native Animated API |
+| `lineHeight` (raw number) | Not a TextProps prop; pass via style when needed |
+| `cursor` | Web-only concept |
+
+Everything else (positioning, sizing, flex, overflow, opacity, directional borders) should use adapter props.
+
 ---
 
 ## File Structure Reference
@@ -513,7 +531,7 @@ For the adapter type definitions (all available props, color types, variant type
 
 ## Why This Matters
 
-The research in this repository ([mm-dx-research.md](./mm-dx-research.md)) demonstrates that:
+The research in this repository ([mm-dx-findings.md](./mm-dx-findings.md); detailed evidence in [mm-dx-research.md](./mm-dx-research.md)) demonstrates that:
 
 - Imperative code (inline styles, raw HTML) stalls at cross-platform support and accumulates drift
 - The adapter/monadic approach costs ~2.6x upfront but is the only one that ships iOS, feature flags, runtime configuration, and dark mode without rewriting
