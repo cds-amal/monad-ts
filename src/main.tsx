@@ -7,6 +7,7 @@ import { ThemeProvider } from './theme/useTheme'
 import { FeatureFlagsProvider } from './features'
 import { ServicesProvider } from './services/ServicesContext'
 import { defaultServices } from './services/defaultServices'
+import { UIConfigProvider, ConfigDialog } from './config'
 import './index.css'
 import './fonts.css'
 import App from './App'
@@ -23,7 +24,10 @@ createRoot(document.getElementById('root')!).render(
         <FeatureFlagsProvider>
           <ServicesProvider services={defaultServices}>
             <AdapterProvider adapter={webAdapter}>
-              <App />
+              <UIConfigProvider>
+                <App />
+                <ConfigDialog />
+              </UIConfigProvider>
             </AdapterProvider>
           </ServicesProvider>
         </FeatureFlagsProvider>

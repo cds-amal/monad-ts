@@ -23,6 +23,7 @@ import { EnvironmentProvider, createEnvironment } from './environment'
 import { FeatureFlagsProvider } from './features'
 import { ServicesProvider } from './services/ServicesContext'
 import { defaultServices } from './services/defaultServices'
+import { UIConfigProvider, ConfigDialog } from './config'
 import App from './App'
 
 const environment = createEnvironment(
@@ -39,7 +40,10 @@ function ThemedApp() {
       <FeatureFlagsProvider>
         <ServicesProvider services={defaultServices}>
           <AdapterProvider adapter={nativeAdapter}>
-            <App />
+            <UIConfigProvider>
+              <App />
+              <ConfigDialog />
+            </UIConfigProvider>
           </AdapterProvider>
         </ServicesProvider>
       </FeatureFlagsProvider>

@@ -9,8 +9,15 @@ export interface FeatureFlags {
    * - iOS: Card that slides in from top
    */
   enableFlaggedAddressExplanation: boolean
+
+  /**
+   * When enabled, long-pressing configurable UI elements opens a configuration dialog
+   * for adjusting properties like variant, size, density, and visibility.
+   */
+  enableUIConfig: boolean
 }
 
 export const defaultFlags: FeatureFlags = {
   enableFlaggedAddressExplanation: true,
+  enableUIConfig: true,
 }

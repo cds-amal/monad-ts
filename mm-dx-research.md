@@ -52,6 +52,7 @@ Both approaches use the same MetaMask Design System (MDS) packages:
 | C: Dark Mode | Medium | Can we separate pure logic from side effects? |
 | D: Cross-Platform (iOS) | High | Does the architecture extend, or do we start over? |
 | E: Feature Flags | High | Runtime config, platform-specific UI |
+| F: UI Config System | High | What happens when you bypass the adapter layer? |
 
 ---
 
@@ -208,6 +209,106 @@ That's it. The bundler picks the right file based on platform.
 
 ---
 
+### Task F: UI Config System (Long-Press Configuration Dialog)
+
+**The problem:** Add a runtime UI configuration system: long-press any configurable component to reveal a dialog for adjusting its properties (variant, size, density, visibility). Changes persist across sessions.
+
+| Metric | Functional |
+|--------|------------|
+| New files | 10 (7 shared, 2 native-specific, 1 web-specific) |
+| Modified files | 5 |
+| Platform-specific files | `ConfigDialog.native.tsx`, `LongPressWrapper.native.tsx`, `persistence.native.ts` |
+| Feature-flagged | Yes (`enableUIConfig`) |
+
+**This is the interesting one.** Not because it's hard, but because the first implementation got it wrong, and the failure mode is instructive.
+
+#### What Went Wrong (And What It Teaches)
+
+The initial implementation bypassed the adapter layer. The `ConfigDialog` used raw HTML elements (`<div>`, `<input type="range">`, `<input type="color">`, `<button>`) instead of going through `usePrimitives()`. The `LongPressWrapper` was a raw `<div>` with mouse/touch event handlers. The persistence layer used `localStorage` directly.
+
+The result? Web worked great. Native crashed immediately with `View config getter callback for component 'div' must be a function`. The monadic architecture went from supporting both platforms to only supporting one.
+
+**This is the key finding from Task F: a good architecture can still produce a bad outcome if you don't use it.** The adapter layer was right there. The patterns were established. The developer (in this case, an AI) just... went around them, because raw HTML was faster to type.
+
+#### The Three Bypass Points
+
+**1. Modal/overlay pattern (no adapter primitive)**
+
+The adapter provides `Box`, `Text`, `Button`, `Pressable`, `TextInput`, `ScrollView`, `IconButton`. It doesn't have a `Modal` or `Overlay`. So the dialog reached for `<div style={{ position: 'fixed' }}>` on web, which has no native equivalent.
+
+The fix: platform-specific files. `ConfigDialog.tsx` uses a `<div>` overlay on web. `ConfigDialog.native.tsx` uses React Native's `Modal`. The dialog *content* (labels, chips, buttons) goes through the adapter on both platforms.
+
+This is the same pattern we used for `FlaggedAddressTooltip` in Task E. The precedent existed; it just wasn't followed.
+
+**2. Specialized inputs (`<input type="range">`, `<input type="color">`)**
+
+The adapter's `TextInput` covers text/number/password. It doesn't cover range sliders or color pickers. The web dialog used browser-native inputs that don't exist on React Native.
+
+The fix on native: `+`/`-` stepper buttons for the slider type (built from `Pressable` + `Text`), plain `TextInput` for color values. Different interaction pattern, same data flow. This is the adapter model working correctly: the interaction may be platform-specific, but the state management and data types are shared.
+
+**3. Persistence (`localStorage` vs `AsyncStorage`)**
+
+`localStorage` is synchronous and web-only. React Native doesn't have it. The original persistence module used it directly, which silently failed on native (the try/catch returned `{}`; configs worked in-session but never persisted).
+
+The fix: `persistence.ts` wraps `localStorage` in async functions. `persistence.native.ts` uses `@react-native-async-storage/async-storage`. The context loads overrides asynchronously on mount, starting with empty state. Same interface, platform-appropriate implementation. The bundler (Vite vs Metro) picks the right file automatically.
+
+#### Why This Happened
+
+It's tempting to say "just follow the adapter pattern" and leave it at that. But there's a structural reason the adapter got bypassed: **the adapter didn't cover the use case**.
+
+The adapter's primitive set was designed for content layout (Box, Text, Pressable, Button, TextInput). The ConfigDialog needed an *overlay* pattern (modal backdrop, positioned container, specialized inputs). When the primitives don't cover what you need, the path of least resistance is to drop down to the platform directly, which means you silently break cross-platform support.
+
+This suggests a design principle: **the adapter layer should have a clear policy for when it's OK to go platform-specific, and the mechanism for doing so (`.native.tsx` files) should be the obvious choice, not an afterthought.** In this codebase, the `.native.tsx` pattern was established (Task D, Task E), but it wasn't the reflex. The reflex was to use `<div>`.
+
+#### The Architecture Held Up (Where It Was Used)
+
+The parts of the UI config system that went through the adapter worked on both platforms immediately:
+
+- `useConfigurable` hook: shared, works everywhere
+- `UIConfigContext` + `UIConfigProvider`: shared, works everywhere
+- `LongPressWrapper.native.tsx`: uses RN's `Pressable` with `onLongPress`
+- `LongPressWrapper.tsx`: uses `<div>` with mouse/touch timer
+- Dialog content (labels, chip buttons, reset button): adapter primitives on both platforms
+- Feature flag gating: `useFeatureFlag('enableUIConfig')`, same pattern as Task E
+
+The lesson isn't that the architecture failed. It's that the architecture only works if you actually use it, and the failure mode when you don't is a silent regression from cross-platform to single-platform.
+
+#### Storage: The Platform Split Done Right
+
+Worth calling out how persistence ended up, because it's a good example of the monadic split working as intended:
+
+```
+persistence.ts          → localStorage (sync, wrapped in async)
+persistence.native.ts   → AsyncStorage (truly async)
+```
+
+Both export the same async interface: `loadOverrides()`, `saveOverrides()`, `clearOverrides()`. The `UIConfigContext` calls `loadOverrides().then(setOverrides)` on mount. On web, the Promise resolves immediately (it's just wrapping sync localStorage). On native, it resolves after the real async read. Same consumer code, platform-appropriate storage.
+
+This is the "overhead" from Tasks A through D paying off: the `.native.ts` file pattern, the async-compatible context initialization, the bundler resolution. All infrastructure that was already in place.
+
+#### Updated Provider Stack
+
+```typescript
+<EnvironmentProvider>      // Platform + mode detection
+  <ThemeProvider>          // Theme state
+    <FeatureFlagsProvider> // Feature toggles
+      <ServicesProvider>   // Business logic injection
+        <AdapterProvider>  // UI primitive injection
+          <UIConfigProvider>  // Runtime UI configuration
+            <App />
+            <ConfigDialog />
+          </UIConfigProvider>
+        </AdapterProvider>
+      </ServicesProvider>
+    </FeatureFlagsProvider>
+  </ThemeProvider>
+</EnvironmentProvider>
+```
+
+`UIConfigProvider` sits inside `AdapterProvider` (it needs primitives for the dialog) and inside `FeatureFlagsProvider` (it's gated behind `enableUIConfig`).
+
+---
+
 ## Architecture Comparison
 
 ### What the Functional Structure Looks Like (mm-monad_03)
@@ -231,6 +332,18 @@ src/
 │   ├── web.tsx           # Web implementation
 │   ├── native.tsx        # Native implementation
 │   └── tokens.native.ts  # Generated from MDS
+├── config/               # Runtime UI configuration (Task F)
+│   ├── types.ts          # ConfigProperty, UIElementConfig
+│   ├── persistence.ts    # localStorage (web)
+│   ├── persistence.native.ts  # AsyncStorage (native)
+│   ├── useLongPress.ts   # Web gesture hook
+│   ├── LongPressWrapper.tsx        # Web: <div> + timer
+│   ├── LongPressWrapper.native.tsx # Native: RN Pressable
+│   ├── UIConfigContext.tsx    # Provider + hook (shared)
+│   ├── useConfigurable.ts    # Integration hook (shared)
+│   ├── ConfigDialog.tsx       # Web dialog (HTML overlay)
+│   ├── ConfigDialog.native.tsx # Native dialog (RN Modal)
+│   └── index.ts
 ├── validation/           # Composable validation
 │   ├── index.ts          # ValidationResult monad
 │   └── addressValidation.ts
@@ -249,7 +362,10 @@ src/
     <FeatureFlagsProvider> // Feature toggles
       <ServicesProvider>   // Business logic injection
         <AdapterProvider>  // UI primitive injection
-          <App />
+          <UIConfigProvider>  // Runtime UI configuration
+            <App />
+            <ConfigDialog />
+          </UIConfigProvider>
         </AdapterProvider>
       </ServicesProvider>
     </FeatureFlagsProvider>
@@ -756,6 +872,9 @@ I think that basically covers it!
 - Feature flags infrastructure
 - Environment context for cross-platform mode detection
 - Platform-specific flagged address explanation UI
+- Runtime UI configuration system with long-press dialog (Task F)
+- AsyncStorage persistence for native, localStorage for web
+- Lesson learned: adapter bypass causes silent cross-platform regression
 
 ### mm-monad_02
 - Code review mitigations for 100+ person team scale

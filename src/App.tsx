@@ -6,6 +6,7 @@ import { TokenList } from './components/TokenList'
 import { TransferForm } from './components/TransferForm'
 import { TransferStatus } from './components/TransferStatus'
 import { ThemeToggle } from './components/ThemeToggle'
+import { useConfigurable, LongPressWrapper } from './config'
 import { Token, TransferResult } from './types'
 
 export default function App() {
@@ -13,6 +14,26 @@ export default function App() {
   const { wallet, tokens, loading, connect, disconnect, refreshTokens } = useWallet()
   const [selectedToken, setSelectedToken] = useState<Token | null>(null)
   const [transferResult, setTransferResult] = useState<TransferResult | null>(null)
+
+  const { values: ctaValues, onLongPress: ctaOnLongPress } = useConfigurable({
+    elementId: 'connect-cta',
+    elementType: 'Button',
+    displayName: 'Connect CTA',
+    properties: {
+      variant: {
+        type: 'select',
+        label: 'Button Variant',
+        currentValue: 'primary',
+        options: ['primary', 'secondary', 'tertiary', 'danger'],
+      },
+      size: {
+        type: 'select',
+        label: 'Button Size',
+        currentValue: 'lg',
+        options: ['sm', 'md', 'lg'],
+      },
+    },
+  })
 
   const handleTransferComplete = (result: TransferResult) => {
     setTransferResult(result)
@@ -76,16 +97,18 @@ export default function App() {
                   Connect your wallet to start transferring tokens
                 </Text>
               </Box>
-              <Button
-                variant="primary"
-                size="lg"
-                onPress={connect}
-                disabled={loading}
-                loading={loading}
-                loadingText="Connecting"
-              >
-                Connect Wallet
-              </Button>
+              <LongPressWrapper onLongPress={ctaOnLongPress}>
+                <Button
+                  variant={ctaValues.variant as 'primary' | 'secondary' | 'tertiary' | 'danger'}
+                  size={ctaValues.size as 'sm' | 'md' | 'lg'}
+                  onPress={connect}
+                  disabled={loading}
+                  loading={loading}
+                  loadingText="Connecting"
+                >
+                  Connect Wallet
+                </Button>
+              </LongPressWrapper>
             </Box>
           ) : (
             <>

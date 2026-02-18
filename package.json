@@ -9,13 +9,14 @@
     "build": "pnpm prebuild && tsc -b && vite build",
     "preview": "vite preview",
     "native": "pnpm prebuild && expo start",
-    "native:ios": "pnpm prebuild && expo start --ios",
-    "native:android": "pnpm prebuild && expo start --android"
+    "native:ios": "pnpm prebuild && expo start --clear --ios",
+    "native:android": "pnpm prebuild && expo start --clear --android"
   },
   "dependencies": {
     "@metamask/design-system-react": "^0.6.0",
     "@metamask/design-system-tailwind-preset": "^0.6.1",
     "@metamask/design-tokens": "^8.1.1",
+    "@react-native-async-storage/async-storage": "^2.2.0",
     "buffer": "^6.0.3",
     "crypto-browserify": "^3.12.1",
     "empty-module": "^0.0.2",
