@@ -52,6 +52,7 @@ Both approaches use the same MetaMask Design System (MDS) packages:
 | C: Dark Mode | Medium | Can we separate pure logic from side effects? |
 | D: Cross-Platform (iOS) | High | Does the architecture extend, or do we start over? |
 | E: Feature Flags | High | Runtime config, platform-specific UI |
+| F: UI Config System | High | What happens when you bypass the adapter layer? |
 
 ---
 
@@ -66,6 +67,27 @@ Both approaches use the same MetaMask Design System (MDS) packages:
 | Platforms supported | 2 (Web, iOS) | 1 (Web) | 2x |
 | Files with platform conditionals | 0 | N/A | — |
 
+### Cost Per Task (Functional)
+
+This tells the compounding story. The infrastructure gets built once; each subsequent feature pays less for cross-platform support.
+
+| Task | New Lines | Shared | Web-Only | Native-Only | Modified Files | New Deps |
+|------|-----------|--------|----------|-------------|----------------|----------|
+| A: Input Component | 147 | 147 | 0 | 0 | 1 | 0 |
+| B: AddressSelect Refactor | 65 | 65 | 0 | 0 | 1 | 0 |
+| C: Dark Mode | 85 | 85 | 0 | 0 | 2 | 0 |
+| D: Cross-Platform (iOS) | 567 | 45 | 287 | 235 | 3 | 5 |
+| E: Feature Flags | 318 | 70 | 108 | 175 | 4 | 0 |
+| F: UI Config System | 849 | 215 | 351 | 283 | 6 | 1 |
+
+A few things stand out:
+
+**Shared code is the minority.** Tasks D, E, and F all have more platform-specific code than shared code. That's not a failure of the architecture; it's the architecture doing its job. The shared code (types, context, hooks) defines the *contract*. The platform-specific code implements the *interaction*. A long-press on iOS feels different from a long-press on web, and the code reflects that.
+
+**The cost of going cross-platform.** Task F added 849 lines. If we were web-only, it would have been ~566 (shared + web). The native support cost 283 lines, or about 33% extra. That's the price of the second platform. Compare that to Task D, where the *entire task* was adding the second platform from scratch.
+
+**Marginal cost of the pattern is shrinking.** Task D established the `.native.tsx` pattern and adapter layer (567 lines of infrastructure). Task E reused that pattern (318 lines, but most of it was feature-specific UI). Task F reused it again (849 lines, but that includes a full dialog with 5 property editor types). The infrastructure cost per feature is trending toward zero; what's left is feature complexity.
+
 ### The Squishy Stuff
 
 | Capability | Functional | Imperative |
@@ -76,17 +98,40 @@ Both approaches use the same MetaMask Design System (MDS) packages:
 | Service swapping | ✅ Dependency injection | ❌ Direct imports |
 | Unit testability | ✅ Pure functions, isolated | ⚠️ Coupled to React lifecycle |
 
-### Velocity Over Time
+### Velocity Over Time (Measured in Commits)
 
-Here's the thing nobody tells you about "move fast" architectures:
+Here's the thing nobody tells you about "move fast" architectures. We can measure this in commits, not calendar time, because both branches worked through the same task sequence:
+
+```mermaid
+---
+config:
+    themeVariables:
+        xyChart:
+            plotColorPalette: "#4CAF50, #F44336"
+---
+xychart-beta
+    title "Cumulative Features Shipped"
+    x-axis ["A: Input", "B: Refactor", "C: Dark Mode", "D: iOS", "E: Flags", "F: Config"]
+    y-axis "Features Delivered" 0 --> 7
+    line "Functional" [1, 2, 3, 4, 5, 6]
+    line "Imperative" [1, 2, 3, 3, 3, 3]
+```
+
+> **Green:** Functional (keeps shipping; infrastructure compounds with each feature)
+>
+> **Red:** Imperative (stalled at feature 4; requesting budget to retrofit architecture)
+
+The Y-axis is cumulative features shipped: the thing PMs and EMs actually track. Both branches worked through the same backlog. The imperative line doesn't crash; it flatlines. That's arguably worse than a cliff: a cliff implies something broke, a flatline implies the approach simply ran out of runway.
 
 ```
-Functional:  [Slower]──────[Match]──────[Faster]────────→
-Imperative:  [Faster]──────[Match]──────[Slower]────────→
-             Day 1         Day 15       Day 30+
+                Task A    Task B    Task C    Task D    Task E    Task F
+Functional:     Input     Dropdown  DarkMode  iOS ✅    Flags ✅   Config ✅
+Imperative:     Input     Refactor  DarkMode  iOS ❌    —         —
 ```
 
-The crossover happens around day 15. After that, functional patterns compound while imperative patterns accumulate debt. (Ask me how I know.)
+The crossover happens at the 4th feature commit. Tasks A through C, both branches deliver (imperative faster). At Task D (cross-platform), imperative produces a document explaining why it can't; functional produces a working iOS app. Tasks E and F don't exist on the imperative branch at all.
+
+After the crossover, functional patterns compound while imperative patterns accumulate debt. Each new feature on the functional branch reuses infrastructure that's already paid for (adapters, contexts, `.native.tsx` resolution). Each new feature on the imperative branch would require retrofitting that infrastructure first.
 
 ---
 
@@ -208,6 +253,121 @@ That's it. The bundler picks the right file based on platform.
 
 ---
 
+### Task F: UI Config System (Long-Press Configuration Dialog)
+
+**The problem:** Add a runtime UI configuration system: long-press any configurable component to reveal a dialog for adjusting its properties (variant, size, density, visibility). Changes persist across sessions.
+
+| Metric | Value |
+|--------|-------|
+| New lines (total) | 849 |
+| New lines (shared) | 215 (types, context, hook, barrel) |
+| New lines (web-only) | 351 (persistence, long-press, dialog) |
+| New lines (native-only) | 283 (persistence, long-press, dialog) |
+| Modified lines (insertions/deletions) | +170 / -78 across 6 files |
+| New files | 11 (4 shared, 4 web-only, 3 native-only) |
+| Modified files | 6 |
+| Platform-specific files | `ConfigDialog.native.tsx`, `LongPressWrapper.native.tsx`, `persistence.native.ts` |
+| Feature-flagged | Yes (`enableUIConfig`) |
+| Reusable hooks created | 3 (`useConfigurable`, `useLongPress`, `useUIConfig`) |
+| New dependency | `@react-native-async-storage/async-storage` (native only) |
+
+**This is the interesting one.** Not because it's hard, but because the first implementation got it wrong, and the failure mode is instructive.
+
+#### What Went Wrong (And What It Teaches)
+
+The initial implementation bypassed the adapter layer. The `ConfigDialog` used raw HTML elements (`<div>`, `<input type="range">`, `<input type="color">`, `<button>`) instead of going through `usePrimitives()`. The `LongPressWrapper` was a raw `<div>` with mouse/touch event handlers. The persistence layer used `localStorage` directly.
+
+The result? Web worked great. Native crashed immediately with `View config getter callback for component 'div' must be a function`. The monadic architecture went from supporting both platforms to only supporting one.
+
+**This is the key finding from Task F: a good architecture can still produce a bad outcome if you don't use it.** The adapter layer was right there. The patterns were established. The developer (in this case, an AI) just... went around them, because raw HTML was faster to type.
+
+#### The Three Bypass Points
+
+**1. Modal/overlay pattern (no adapter primitive)**
+
+The adapter provides `Box`, `Text`, `Button`, `Pressable`, `TextInput`, `ScrollView`, `IconButton`. It doesn't have a `Modal` or `Overlay`. So the dialog reached for `<div style={{ position: 'fixed' }}>` on web, which has no native equivalent.
+
+The fix: platform-specific files. `ConfigDialog.tsx` uses a `<div>` overlay on web. `ConfigDialog.native.tsx` uses React Native's `Modal`. The dialog *content* (labels, chips, buttons) goes through the adapter on both platforms.
+
+This is the same pattern we used for `FlaggedAddressTooltip` in Task E. The precedent existed; it just wasn't followed.
+
+**2. Specialized inputs (`<input type="range">`, `<input type="color">`)**
+
+The adapter's `TextInput` covers text/number/password. It doesn't cover range sliders or color pickers. The web dialog used browser-native inputs that don't exist on React Native.
+
+The fix on native: `+`/`-` stepper buttons for the slider type (built from `Pressable` + `Text`), plain `TextInput` for color values. Different interaction pattern, same data flow. This is the adapter model working correctly: the interaction may be platform-specific, but the state management and data types are shared.
+
+**3. Persistence (`localStorage` vs `AsyncStorage`)**
+
+`localStorage` is synchronous and web-only. React Native doesn't have it. The original persistence module used it directly, which silently failed on native (the try/catch returned `{}`; configs worked in-session but never persisted).
+
+The fix: `persistence.ts` wraps `localStorage` in async functions. `persistence.native.ts` uses `@react-native-async-storage/async-storage`. The context loads overrides asynchronously on mount, starting with empty state. Same interface, platform-appropriate implementation. The bundler (Vite vs Metro) picks the right file automatically.
+
+#### Why This Happened
+
+It's tempting to say "just follow the adapter pattern" and leave it at that. But there's a structural reason the adapter got bypassed: **the adapter didn't cover the use case**.
+
+The adapter's primitive set was designed for content layout (Box, Text, Pressable, Button, TextInput). The ConfigDialog needed an *overlay* pattern (modal backdrop, positioned container, specialized inputs). When the primitives don't cover what you need, the path of least resistance is to drop down to the platform directly, which means you silently break cross-platform support.
+
+This suggests a design principle: **the adapter layer should have a clear policy for when it's OK to go platform-specific, and the mechanism for doing so (`.native.tsx` files) should be the obvious choice, not an afterthought.** In this codebase, the `.native.tsx` pattern was established (Task D, Task E), but it wasn't the reflex. The reflex was to use `<div>`.
+
+#### The Architecture Held Up (Where It Was Used)
+
+The parts of the UI config system that went through the adapter worked on both platforms immediately:
+
+- `useConfigurable` hook: shared, works everywhere
+- `UIConfigContext` + `UIConfigProvider`: shared, works everywhere
+- `LongPressWrapper.native.tsx`: uses RN's `Pressable` with `onLongPress`
+- `LongPressWrapper.tsx`: uses `<div>` with mouse/touch timer
+- Dialog content (labels, chip buttons, reset button): adapter primitives on both platforms
+- Feature flag gating: `useFeatureFlag('enableUIConfig')`, same pattern as Task E
+
+The lesson isn't that the architecture failed. It's that the architecture only works if you actually use it, and the failure mode when you don't is a silent regression from cross-platform to single-platform.
+
+#### Storage: The Platform Split Done Right
+
+Worth calling out how persistence ended up, because it's a good example of the monadic split working as intended:
+
+```
+persistence.ts          → localStorage (sync, wrapped in async)
+persistence.native.ts   → AsyncStorage (truly async)
+```
+
+Both export the same async interface: `loadOverrides()`, `saveOverrides()`, `clearOverrides()`. The `UIConfigContext` calls `loadOverrides().then(setOverrides)` on mount. On web, the Promise resolves immediately (it's just wrapping sync localStorage). On native, it resolves after the real async read. Same consumer code, platform-appropriate storage.
+
+This is the "overhead" from Tasks A through D paying off: the `.native.ts` file pattern, the async-compatible context initialization, the bundler resolution. All infrastructure that was already in place.
+
+#### Tooling Gotcha: Metro Cache and `.native` File Resolution
+
+One more friction point worth documenting. After creating the `.native.tsx` files, the iOS build still crashed with the same `div` error. Turns out Metro (React Native's bundler) caches module resolution. When `ConfigDialog.native.tsx` was created while Metro was already running, Metro had already resolved `./ConfigDialog` to `ConfigDialog.tsx` (the web version) and cached that mapping. Hot reload picks up file *changes*, but it doesn't re-evaluate which file an import should resolve to when a new platform-specific variant appears.
+
+The fix: restart Metro with `--clear` to flush the module resolution cache. We ended up adding `--clear` to the `ios` and `android` scripts in `package.json` as a default, because this gotcha bites you every time you add a new `.native` file mid-session.
+
+This is a tooling cost of the `.native.tsx` convention. The pattern itself is correct (zero-config platform splitting, tree-shakeable, bundler handles routing), but the build tool has a sharp edge: its cache doesn't expect new files to change how an existing import resolves. In practice this means the first time you add a `.native` variant of an existing module, you need to restart the bundler. Not a dealbreaker, but surprising enough to burn 10 minutes the first time you hit it.
+
+#### Updated Provider Stack
+
+```typescript
+<EnvironmentProvider>      // Platform + mode detection
+  <ThemeProvider>          // Theme state
+    <FeatureFlagsProvider> // Feature toggles
+      <ServicesProvider>   // Business logic injection
+        <AdapterProvider>  // UI primitive injection
+          <UIConfigProvider>  // Runtime UI configuration
+            <App />
+            <ConfigDialog />
+          </UIConfigProvider>
+        </AdapterProvider>
+      </ServicesProvider>
+    </FeatureFlagsProvider>
+  </ThemeProvider>
+</EnvironmentProvider>
+```
+
+`UIConfigProvider` sits inside `AdapterProvider` (it needs primitives for the dialog) and inside `FeatureFlagsProvider` (it's gated behind `enableUIConfig`).
+
+---
+
 ## Architecture Comparison
 
 ### What the Functional Structure Looks Like (mm-monad_03)
@@ -231,6 +391,18 @@ src/
 │   ├── web.tsx           # Web implementation
 │   ├── native.tsx        # Native implementation
 │   └── tokens.native.ts  # Generated from MDS
+├── config/               # Runtime UI configuration (Task F)
+│   ├── types.ts          # ConfigProperty, UIElementConfig
+│   ├── persistence.ts    # localStorage (web)
+│   ├── persistence.native.ts  # AsyncStorage (native)
+│   ├── useLongPress.ts   # Web gesture hook
+│   ├── LongPressWrapper.tsx        # Web: <div> + timer
+│   ├── LongPressWrapper.native.tsx # Native: RN Pressable
+│   ├── UIConfigContext.tsx    # Provider + hook (shared)
+│   ├── useConfigurable.ts    # Integration hook (shared)
+│   ├── ConfigDialog.tsx       # Web dialog (HTML overlay)
+│   ├── ConfigDialog.native.tsx # Native dialog (RN Modal)
+│   └── index.ts
 ├── validation/           # Composable validation
 │   ├── index.ts          # ValidationResult monad
 │   └── addressValidation.ts
@@ -249,7 +421,10 @@ src/
     <FeatureFlagsProvider> // Feature toggles
       <ServicesProvider>   // Business logic injection
         <AdapterProvider>  // UI primitive injection
-          <App />
+          <UIConfigProvider>  // Runtime UI configuration
+            <App />
+            <ConfigDialog />
+          </UIConfigProvider>
         </AdapterProvider>
       </ServicesProvider>
     </FeatureFlagsProvider>
@@ -657,7 +832,7 @@ When it doesn't? Slow CI pipelines that developers learn to circumvent. Flaky te
 | Cognitive patterns | 4 consistent hooks | N patterns (grows with codebase) | ✅ Functional |
 | Onboarding | Learn 4 hooks, apply everywhere | Learn codebase-specific conventions | ✅ Functional |
 
-**What we found:** The crossover point (~day 15) determines alignment. For enterprise timescales (years, not weeks), functional's higher initial cost amortizes to lower total cost. The 4-hook pattern (`usePrimitives`, `useServices`, `useFeatureFlag`, `useEnvironment`) becomes institutional knowledge that transfers across teams.
+**What we found:** The crossover point (~4 feature commits in our study) determines alignment. For enterprise timescales (years, not weeks), functional's higher initial cost amortizes to lower total cost. The 4-hook pattern (`usePrimitives`, `useServices`, `useFeatureFlag`, `useEnvironment`) becomes institutional knowledge that transfers across teams.
 
 #### Velocity-Enabling (Fail Fast, Document Domain)
 
@@ -687,22 +862,22 @@ Adding a flag documents it. Removing a flag produces compile errors at every usa
 |----------|-----------|------------|-------------------|
 | Fast | ✅ Strong | ⚠️ Degrades with scale | Functional |
 | Predictive | ✅ Strong | ❌ Weak (scattered patterns) | Functional |
-| Low Cost | ⚠️ High initial, amortized over time | ✅ Low initial, high marginal | Functional (>15 days) |
+| Low Cost | ⚠️ High initial, amortized over time | ✅ Low initial, high marginal | Functional (>4 features) |
 | Velocity-Enabling | ✅ Strong | ❌ Weak (no guardrails) | Functional |
 
-**The bottom line:** The functional approach aligns with all four properties after the initial investment period (~15 days). The imperative approach only aligns with short-term cost reduction, trading the other three properties for initial velocity.
+**The bottom line:** The functional approach aligns with all four properties after the initial investment period (~4 feature commits). The imperative approach only aligns with short-term cost reduction, trading the other three properties for initial velocity.
 
 ### The Trap
 
-This explains why enterprises often regret choosing imperative patterns for "faster time-to-market." They optimize for the one property (low initial cost) that doesn't matter at enterprise timescales. Here's how it typically goes:
+This explains why enterprises often regret choosing imperative patterns for "faster time-to-market." They optimize for the one property (low initial cost) that doesn't matter at enterprise timescales. We saw this play out in our study, measured in features shipped:
 
-1. **Month 1-3:** Imperative ships faster, team celebrates velocity
-2. **Month 6:** Tests slow down, flakiness increases, "just mock it" becomes culture
-3. **Month 12:** Feature flags exist in 3 implementations, nobody knows which is canonical
-4. **Month 18:** iOS initiative requires "refactoring sprint" that takes a quarter
-5. **Month 24:** Original team has churned, new engineers can't reason about test failures
+1. **Features 1-3** (Input, Refactor, Dark Mode): Imperative ships faster, team celebrates velocity
+2. **Feature 4** (Cross-Platform): Imperative hits a wall. Produces a document instead of a working app. Functional delivers iOS support.
+3. **Features 5-6** (Feature Flags, UI Config): Don't exist on the imperative branch. Would require retrofitting the infrastructure that functional already has.
 
-The functional approach's "slower start" is actually **buying alignment** with the test philosophy properties that matter at scale.
+In a real codebase the pattern continues: feature flags show up in 3 different implementations, nobody knows which is canonical. The iOS initiative requires a "refactoring sprint" that takes a quarter. New engineers can't reason about test failures because the mocking strategy is different in every file.
+
+The functional approach's "slower start" is actually **buying alignment** with the test philosophy properties that matter at scale. And the crossover point is measurable: it's the feature where you first need something the imperative approach didn't build infrastructure for.
 
 ---
 
@@ -756,6 +931,9 @@ I think that basically covers it!
 - Feature flags infrastructure
 - Environment context for cross-platform mode detection
 - Platform-specific flagged address explanation UI
+- Runtime UI configuration system with long-press dialog (Task F)
+- AsyncStorage persistence for native, localStorage for web
+- Lesson learned: adapter bypass causes silent cross-platform regression
 
 ### mm-monad_02
 - Code review mitigations for 100+ person team scale
