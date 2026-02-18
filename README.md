@@ -6,7 +6,7 @@ A React TypeScript app for figuring out whether monadic/functional patterns or i
 
 We built the same token transfer UI two ways: one using the MetaMask Design System directly (imperative), and one wrapping it in adapters with dependency injection (functional/monadic). Then we kept adding features to see which approach held up better.
 
-**The short version:** The functional approach needed 2.6x more code upfront, but it was the only one that could ship iOS support without starting over. It also made feature flags and runtime UI configuration trivial to add, while the imperative approach would've required retrofitting infrastructure first. By feature 4, the imperative branch stopped shipping; by feature 6, the functional branch was compounding.
+**The short version:** The functional approach needed 2.6x more code upfront, but it was the only one that could ship iOS support without starting over. It also made feature flags, runtime UI configuration, and design system compliance trivial to add, while the imperative approach would've required retrofitting infrastructure first. By feature 4, the imperative branch stopped shipping; by feature 7, the functional branch was compounding.
 
 ---
 
@@ -35,8 +35,10 @@ The more interesting experiment: what happens when you're building *on top of* a
 | `mm-monad_02` | Code review mitigations for 100+ person teams |
 | `mm-monad_03` | Feature flags, environment context, platform-specific UI |
 | `mm-monad_04` | Runtime UI config system, adapter bypass case study |
+| `mm-monad_05` | Adapter gap closure, design system compliance (Task G) |
 
-**Research doc:** `mm-dx-research.md` (on the mm-monad branches)
+**Findings:** [`mm-dx-findings.md`](./mm-dx-findings.md) (the takeaway; ~270 lines)
+**Evidence journal:** [`mm-dx-research.md`](./mm-dx-research.md) (per-task details; ~950 lines)
 
 ---
 
@@ -67,16 +69,18 @@ npm run ios
 | **D: Cross-Platform (iOS)** | Get the app running on iOS simulator | Functional: working iOS app via `.native.tsx` files. Imperative: we documented what it would take and didn't do it. |
 | **E: Feature Flags** | Runtime feature toggles with platform-specific UI | Functional: 35-line context, type-safe, testable. Imperative: would need to retrofit localStorage or a library. |
 | **F: UI Config System** | Long-press dialog for runtime component configuration | Good architecture + bad usage = bad outcome. Initial impl bypassed the adapter layer, silently regressing to web-only. Fix required platform-specific files for dialog, gestures, and persistence. |
+| **G: Close Adapter Gaps** | Eliminate style escape hatches, expand adapter surface | 3 files of adapter logic, 12 files of mechanical substitutions. Design directives propagate structurally, not socially. |
 
 ### The Numbers
 
-| Metric | Functional (mm-monad_04) | Imperative (mm-imperative_01) |
+| Metric | Functional (mm-monad_05) | Imperative (mm-imperative_01) |
 |--------|--------------------------|-------------------------------|
-| Total new code | ~1,713 LOC (Tasks A-F) | ~327 LOC (Tasks A-C) |
-| Features shipped | 6 | 3 (stalled at Task D) |
+| Total new code | ~2,171 LOC (Tasks A-G) | ~327 LOC (Tasks A-C) |
+| Features shipped | 7 | 3 (stalled at Task D) |
 | Reusable primitives | 10 | 1 (AccountBadge) |
 | Platforms supported | 2 (Web, iOS) | 1 (Web) |
 | Files with platform conditionals | 0 | N/A |
+| Files changed for design directive (Task G) | 15 (3 logic, 12 mechanical) | N/A (no centralized layer) |
 
 ### Cost Per Feature (Functional)
 
@@ -88,18 +92,19 @@ npm run ios
 | D: iOS | 567 | 45 | 287 | 235 |
 | E: Flags | 318 | 70 | 108 | 175 |
 | F: Config | 849 | 215 | 351 | 283 |
+| G: DS Gaps | 140 | 55 | 60 | 45 |
 
 ### The Velocity Crossover (Measured in Commits)
 
 ```
-                Task A    Task B    Task C    Task D    Task E    Task F
-Functional:     Input     Dropdown  DarkMode  iOS ✅    Flags ✅   Config ✅
-Imperative:     Input     Refactor  DarkMode  iOS ❌    —         —
+                Task A    Task B    Task C    Task D    Task E    Task F    Task G
+Functional:     Input     Dropdown  DarkMode  iOS ✅    Flags ✅   Config ✅  DS Gaps ✅
+Imperative:     Input     Refactor  DarkMode  iOS ❌    —         —         —
 ```
 
-The crossover happens at feature 4. Both branches deliver Tasks A through C (imperative faster). At Task D (cross-platform), imperative produces a document; functional produces a working iOS app. Tasks E and F don't exist on the imperative branch at all. After the crossover, functional compounds while imperative accumulates debt.
+The crossover happens at feature 4. Both branches deliver Tasks A through C (imperative faster). At Task D (cross-platform), imperative produces a document; functional produces a working iOS app. Tasks E, F, and G don't exist on the imperative branch at all. After the crossover, functional compounds while imperative accumulates debt.
 
-See the [full research doc](./mm-dx-research.md) for the cumulative features chart and detailed cost analysis.
+See the [findings doc](./mm-dx-findings.md) for the distilled analysis, or the [evidence journal](./mm-dx-research.md) for per-task details.
 
 ---
 
@@ -115,6 +120,7 @@ See the [full research doc](./mm-dx-research.md) for the cumulative features cha
    - `git checkout mm-monad_02`: Team scale mitigations
    - `git checkout mm-monad_03`: Feature flags, environment context
    - `git checkout mm-monad_04`: UI config system, adapter bypass case study
+   - `git checkout mm-monad_05`: Adapter gap closure, design system compliance
 
 ### Branch Lineage
 
@@ -125,7 +131,7 @@ master
 │
 └── metamask-baseline                               (MDS foundation)
     ├── mm-imperative_01                            (direct MDS, Tasks A-C)
-    └── mm-monad_01 → mm-monad_02 → mm-monad_03 → mm-monad_04 (Tasks A-F)
+    └── mm-monad_01 → ... → mm-monad_04 → mm-monad_05 (Tasks A-G)
 ```
 
 ---
@@ -139,6 +145,8 @@ master
 - You need feature flags or A/B testing
 - Long-term maintainability matters
 - You want tests that don't require `jest.mock()` everywhere
+- Design system team ships directives that need structural propagation
+- AI-assisted development (a well-typed adapter layer constrains AI output to compliant patterns)
 
 ### Imperative/Direct makes sense when:
 
@@ -161,7 +169,7 @@ src/
 │
 │ # These exist on monad branches:
 ├── adapters/          # Platform adapters (web.tsx, native.tsx)
-├── config/            # Runtime UI configuration (mm-monad_04)
+├── config/            # Runtime UI configuration (mm-monad_04+)
 ├── environment/       # Cross-platform environment detection
 ├── features/          # Feature flag system
 ├── validation/        # Composable validation (ValidationResult monad)
@@ -185,14 +193,10 @@ Test addresses for validation scenarios:
 
 ---
 
-## The Research Doc
+## The Research
 
-The full analysis is in [mm-dx-research.md](./mm-dx-research.md) (on monad branches and master). It covers:
+The research is split into two companion documents:
 
-- Cumulative features shipped chart (the divergence at feature 4)
-- Per-task cost breakdown by platform (shared/web/native)
-- Detailed code samples showing overhead vs payoff
-- Test philosophy alignment (fast, predictive, low-cost, velocity-enabling)
-- Task F case study: what happens when you bypass the adapter layer
-- Metro cache gotcha with `.native.tsx` file resolution
-- Why enterprises often regret choosing imperative for "faster time-to-market"
+**[mm-dx-findings.md](./mm-dx-findings.md)** (~270 lines): the argument. Organized around insights, not chronology. Covers the thesis, the numbers, the velocity crossover, six key insights, and recommendations. Reads in about 10 minutes.
+
+**[mm-dx-research.md](./mm-dx-research.md)** (~950 lines): the evidence journal. Per-task implementation details, code samples, architecture deep-dives, and raw data tables. Cross-referenced from the findings doc for readers who want the proof.
