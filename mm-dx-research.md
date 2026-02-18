@@ -103,6 +103,12 @@ A few things stand out:
 Here's the thing nobody tells you about "move fast" architectures. We can measure this in commits, not calendar time, because both branches worked through the same task sequence:
 
 ```mermaid
+---
+config:
+    themeVariables:
+        xyChart:
+            plotColorPalette: "#4CAF50, #F44336"
+---
 xychart-beta
     title "Cumulative Features Shipped"
     x-axis ["A: Input", "B: Refactor", "C: Dark Mode", "D: iOS", "E: Flags", "F: Config"]
