@@ -23,7 +23,7 @@ export function Dropdown<T>({
   const close = useCallback(() => setIsOpen(false), [])
 
   return (
-    <Box style={{ position: 'relative' }}>
+    <Box position="relative">
       <Pressable
         onPress={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
@@ -37,7 +37,7 @@ export function Dropdown<T>({
           borderWidth={2}
           borderColor="default"
           backgroundColor={disabled ? 'muted' : 'default'}
-          style={{ opacity: disabled ? 0.6 : 1 }}
+          opacity={disabled ? 0.6 : 1}
         >
           {value !== undefined ? (
             renderTrigger(value)
@@ -54,15 +54,13 @@ export function Dropdown<T>({
 
       {isOpen && (
         <Box
-          style={{
-            position: 'absolute',
-            top: '100%',
-            left: 0,
-            right: 0,
-            marginTop: 4,
-            zIndex: 50,
-            maxHeight: 320,
-          }}
+          position="absolute"
+          top="100%"
+          left={0}
+          right={0}
+          marginTop={1}
+          zIndex={50}
+          maxHeight={320}
           borderRadius={8}
           borderWidth={2}
           borderColor="default"
@@ -93,7 +91,8 @@ Dropdown.Group = function DropdownGroup({ label, children }: DropdownGroupProps)
         paddingHorizontal={3}
         borderColor="default"
         backgroundColor="muted"
-        style={{ borderBottomWidth: 1 }}
+        borderBottomWidth={1}
+        borderBottomColor="default"
       >
         <Text variant="bodyXs" fontWeight="bold" color="muted">
           {label.toUpperCase()}
@@ -118,8 +117,8 @@ Dropdown.Item = function DropdownItem({ onPress, children }: DropdownItemProps) 
       <Box
         paddingVertical={3}
         paddingHorizontal={3}
-        borderColor="muted"
-        style={{ borderBottomWidth: 1 }}
+        borderBottomWidth={1}
+        borderBottomColor="muted"
       >
         {children}
       </Box>

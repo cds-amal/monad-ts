@@ -1,8 +1,10 @@
 import { useState, useRef } from 'react'
-import { Animated, Dimensions, PanResponder, Modal, View, Platform, StatusBar } from 'react-native'
+import { Animated, Dimensions, PanResponder, Modal, Platform, StatusBar } from 'react-native'
 import { usePrimitives } from '../adapters'
 import { useServices } from '../services/ServicesContext'
 import { useFeatureFlag } from '../features'
+import { useTheme } from '../theme/useTheme'
+import { lightTheme, darkTheme } from '../adapters/tokens.native'
 
 interface FlaggedAddressTooltipProps {
   address: string
@@ -24,6 +26,8 @@ export function FlaggedAddressTooltip({ address, onDismiss }: FlaggedAddressTool
   const { Box, Text, Pressable } = usePrimitives()
   const { getFlagDetails } = useServices()
   const enableFlaggedAddressExplanation = useFeatureFlag('enableFlaggedAddressExplanation')
+  const { isDark } = useTheme()
+  const tokens = isDark ? darkTheme : lightTheme
   const [showCard, setShowCard] = useState(false)
   const [dismissed, setDismissed] = useState(false)
 
@@ -102,7 +106,7 @@ export function FlaggedAddressTooltip({ address, onDismiss }: FlaggedAddressTool
         animationType="none"
         onRequestClose={hideCard}
       >
-        <View style={{ flex: 1 }}>
+        <Box flex={1}>
           {/* Backdrop - tap to dismiss */}
           <Pressable
             onPress={hideCard}
@@ -126,7 +130,7 @@ export function FlaggedAddressTooltip({ address, onDismiss }: FlaggedAddressTool
               right: 0,
               height: CARD_HEIGHT,
               transform: [{ translateY: slideAnim }],
-              backgroundColor: '#fdf2f2', // Solid light red background
+              backgroundColor: tokens.colors.error.muted,
               shadowColor: '#000',
               shadowOffset: { width: 0, height: 4 },
               shadowOpacity: 0.25,
@@ -134,7 +138,7 @@ export function FlaggedAddressTooltip({ address, onDismiss }: FlaggedAddressTool
               elevation: 8,
               padding: 16,
               borderBottomWidth: 2,
-              borderBottomColor: '#dc2626',
+              borderBottomColor: tokens.colors.error.default,
             }}
           >
             {/* Header */}
@@ -155,20 +159,20 @@ export function FlaggedAddressTooltip({ address, onDismiss }: FlaggedAddressTool
             </Box>
 
             {/* Details - always visible */}
-            <Box style={{ flex: 1 }}>
+            <Box flex={1}>
               <Text variant="bodyMd" color="default" style={{ lineHeight: 22 }}>
                 {details.details}
               </Text>
             </Box>
 
             {/* Hint at bottom */}
-            <Box style={{ borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.1)', paddingTop: 12, marginTop: 12 }}>
-              <Text variant="bodyXs" color="muted" style={{ textAlign: 'center' }}>
+            <Box borderTopWidth={1} borderTopColor="muted" style={{ paddingTop: 12, marginTop: 12 }}>
+              <Text variant="bodyXs" color="muted" textAlign="center">
                 Swipe up or tap outside to dismiss
               </Text>
             </Box>
           </Animated.View>
-        </View>
+        </Box>
       </Modal>
     </>
   )

@@ -216,6 +216,7 @@ const Box = forwardRef<View, BoxProps>(({
   marginVertical,
   marginHorizontal,
   marginBottom,
+  marginTop,
   flexDirection,
   alignItems,
   justifyContent,
@@ -224,6 +225,27 @@ const Box = forwardRef<View, BoxProps>(({
   borderColor,
   borderRadius,
   onPress,
+  position,
+  top,
+  right,
+  bottom,
+  left,
+  zIndex,
+  flex,
+  flexWrap,
+  flexGrow,
+  width,
+  height,
+  maxWidth,
+  minWidth,
+  maxHeight,
+  minHeight,
+  overflow,
+  opacity,
+  borderBottomWidth,
+  borderBottomColor,
+  borderTopWidth,
+  borderTopColor,
 }, ref) => {
   const tokens = useThemeTokens()
   const computedStyle = {
@@ -235,6 +257,7 @@ const Box = forwardRef<View, BoxProps>(({
     ...(marginVertical !== undefined && { marginVertical }),
     ...(marginHorizontal !== undefined && { marginHorizontal }),
     ...(marginBottom !== undefined && { marginBottom }),
+    ...(marginTop !== undefined && { marginTop }),
     ...(flexDirection && { flexDirection }),
     ...(alignItems && { alignItems }),
     ...(justifyContent && { justifyContent }),
@@ -242,18 +265,39 @@ const Box = forwardRef<View, BoxProps>(({
     ...(borderWidth !== undefined && { borderWidth }),
     ...(borderColor && { borderColor: getBorderColor(borderColor, tokens) }),
     ...(borderRadius !== undefined && { borderRadius }),
+    ...(position && { position }),
+    ...(top !== undefined && { top }),
+    ...(right !== undefined && { right }),
+    ...(bottom !== undefined && { bottom }),
+    ...(left !== undefined && { left }),
+    ...(zIndex !== undefined && { zIndex }),
+    ...(flex !== undefined && { flex }),
+    ...(flexWrap && { flexWrap }),
+    ...(flexGrow !== undefined && { flexGrow }),
+    ...(width !== undefined && { width }),
+    ...(height !== undefined && { height }),
+    ...(maxWidth !== undefined && { maxWidth }),
+    ...(minWidth !== undefined && { minWidth }),
+    ...(maxHeight !== undefined && { maxHeight }),
+    ...(minHeight !== undefined && { minHeight }),
+    ...(overflow && { overflow }),
+    ...(opacity !== undefined && { opacity }),
+    ...(borderBottomWidth !== undefined && { borderBottomWidth }),
+    ...(borderBottomColor && { borderBottomColor: getBorderColor(borderBottomColor, tokens) }),
+    ...(borderTopWidth !== undefined && { borderTopWidth }),
+    ...(borderTopColor && { borderTopColor: getBorderColor(borderTopColor, tokens) }),
     ...(style as object),
   }
 
   if (onPress) {
     return (
-      <RNPressable ref={ref} style={computedStyle} onPress={onPress}>
+      <RNPressable ref={ref} style={computedStyle as object} onPress={onPress}>
         {children}
       </RNPressable>
     )
   }
 
-  return <View ref={ref} style={computedStyle}>{children}</View>
+  return <View ref={ref} style={computedStyle as object}>{children}</View>
 })
 Box.displayName = 'Box'
 
@@ -264,6 +308,7 @@ const Text = forwardRef<RNText, TextProps>(({
   color,
   fontWeight,
   fontFamily,
+  textAlign,
 }, ref) => {
   const tokens = useThemeTokens()
   const variantStyle = getTextVariantStyle(variant)
@@ -278,6 +323,7 @@ const Text = forwardRef<RNText, TextProps>(({
         { color: textColor },
         weight && { fontWeight: weight as never },
         fontFamily === 'mono' && { fontFamily: 'Menlo' },
+        textAlign && { textAlign },
         style as object,
       ]}
     >

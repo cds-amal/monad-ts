@@ -48,12 +48,12 @@ export default function App() {
 
   return (
     <Box
-      style={{ minHeight: '100%' }}
+      minHeight="100%"
       backgroundColor="alternative"
       paddingVertical={10}
       paddingHorizontal={5}
     >
-      <Box style={{ maxWidth: 512, marginHorizontal: 'auto', width: '100%' }}>
+      <Box maxWidth={512} width="100%" style={{ marginHorizontal: 'auto' }}>
         <Box
           flexDirection="row"
           justifyContent="space-between"
@@ -93,7 +93,7 @@ export default function App() {
                 <Text variant="headingMd">
                   Connect Your Wallet
                 </Text>
-                <Text variant="bodyMd" color="muted" style={{ textAlign: 'center' }}>
+                <Text variant="bodyMd" color="muted" textAlign="center">
                   Connect your wallet to start transferring tokens
                 </Text>
               </Box>
@@ -130,7 +130,7 @@ export default function App() {
               </Box>
 
               <Box
-                style={{ height: 1 }}
+                height={1}
                 backgroundColor="muted"
                 marginVertical={6}
               />

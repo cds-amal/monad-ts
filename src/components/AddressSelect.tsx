@@ -66,7 +66,7 @@ export function AddressSelect({ value, onChange, disabled }: AddressSelectProps)
                   <Text variant="bodyXs" color="muted" fontFamily="mono">
                     {formatAddress(account.address)}
                   </Text>
-                  <Text variant="bodyXs" color="muted" style={{ marginTop: 2 }}>
+                  <Text variant="bodyXs" color="muted" style={{ marginTop: 1 }}>
                     {account.description}
                   </Text>
                 </Dropdown.Item>

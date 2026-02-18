@@ -121,7 +121,7 @@ export function TransferForm({ token, onTransferComplete }: TransferFormProps) {
         )}
       />
 
-      <Box style={{ marginTop: 8 }}>
+      <Box marginTop={2}>
         <Button
           variant="primary"
           size="lg"

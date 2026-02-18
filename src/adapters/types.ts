@@ -75,6 +75,7 @@ export interface BoxProps {
   marginVertical?: number
   marginHorizontal?: number
   marginBottom?: number
+  marginTop?: number
   flexDirection?: 'row' | 'column'
   alignItems?: 'flex-start' | 'center' | 'flex-end' | 'stretch'
   justifyContent?: 'flex-start' | 'center' | 'flex-end' | 'space-between' | 'space-around'
@@ -83,6 +84,39 @@ export interface BoxProps {
   borderColor?: BorderColor
   borderRadius?: number
   onPress?: () => void
+
+  // Positioning
+  position?: 'relative' | 'absolute'
+  top?: number | string
+  right?: number | string
+  bottom?: number | string
+  left?: number | string
+  zIndex?: number
+
+  // Flex extensions
+  flex?: number
+  flexWrap?: 'wrap' | 'nowrap'
+  flexGrow?: number
+
+  // Sizing
+  width?: number | string
+  height?: number | string
+  maxWidth?: number | string
+  minWidth?: number | string
+  maxHeight?: number | string
+  minHeight?: number | string
+
+  // Overflow
+  overflow?: 'hidden' | 'visible' | 'scroll'
+
+  // Visual
+  opacity?: number
+
+  // Directional borders
+  borderBottomWidth?: number
+  borderBottomColor?: BorderColor
+  borderTopWidth?: number
+  borderTopColor?: BorderColor
 }
 
 export interface TextProps {
@@ -93,6 +127,7 @@ export interface TextProps {
   color?: SemanticColor
   fontWeight?: 'normal' | 'medium' | 'semibold' | 'bold'
   fontFamily?: 'default' | 'mono'
+  textAlign?: 'left' | 'center' | 'right'
 }
 
 export interface PressableProps {

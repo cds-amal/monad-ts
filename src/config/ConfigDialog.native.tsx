@@ -54,7 +54,7 @@ export function ConfigDialog() {
           >
             {/* Header */}
             <Box flexDirection="row" justifyContent="space-between" alignItems="center" marginBottom={4}>
-              <Box flexDirection="column" gap={1} style={{ flex: 1 }}>
+              <Box flexDirection="column" gap={1} flex={1}>
                 <Text variant="headingSm">
                   Configure {config.displayName}
                 </Text>
@@ -176,7 +176,7 @@ function SelectEditor({
 }) {
   const { Box } = usePrimitives()
   return (
-    <Box flexDirection="row" gap={2} style={{ flexWrap: 'wrap' }}>
+    <Box flexDirection="row" gap={2} flexWrap="wrap">
       {options.map(opt => (
         <ChipButton key={opt} label={opt} selected={value === opt} onPress={() => onChange(opt)} />
       ))}

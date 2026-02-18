@@ -44,13 +44,11 @@ export function ConfigDialog() {
         backgroundColor="default"
         borderRadius={16}
         padding={6}
-        style={{
-          position: 'relative',
-          width: 360,
-          maxHeight: '80vh',
-          overflow: 'auto',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
-        }}
+        position="relative"
+        width={360}
+        maxHeight="80vh"
+        overflow="scroll"
+        style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}
       >
         {/* Header */}
         <Box flexDirection="row" justifyContent="space-between" alignItems="center" marginBottom={4}>
@@ -134,27 +132,22 @@ function PropertyEditor({
 }
 
 function BooleanEditor({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
-  const { Box, Text } = usePrimitives()
+  const { Box, Text, Pressable } = usePrimitives()
   return (
     <Box flexDirection="row" gap={2}>
       {[true, false].map(opt => (
-        <button
-          key={String(opt)}
-          type="button"
-          onClick={() => onChange(opt)}
-          style={{
-            padding: '6px 16px',
-            borderRadius: 8,
-            border: '2px solid',
-            borderColor: value === opt ? 'var(--color-primary-default, #0376c9)' : 'var(--color-border-default, #bbc0c5)',
-            backgroundColor: value === opt ? 'var(--color-primary-muted, #e7f0f9)' : 'transparent',
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-            fontSize: 14,
-          }}
-        >
-          <Text variant="bodySm">{opt ? 'On' : 'Off'}</Text>
-        </button>
+        <Pressable key={String(opt)} onPress={() => onChange(opt)}>
+          <Box
+            paddingVertical={2}
+            paddingHorizontal={4}
+            borderRadius={8}
+            borderWidth={2}
+            borderColor={value === opt ? 'primary' : 'default'}
+            backgroundColor={value === opt ? 'primaryMuted' : undefined}
+          >
+            <Text variant="bodySm">{opt ? 'On' : 'Off'}</Text>
+          </Box>
+        </Pressable>
       ))}
     </Box>
   )
@@ -169,27 +162,22 @@ function SelectEditor({
   value: string
   onChange: (v: string) => void
 }) {
-  const { Box, Text } = usePrimitives()
+  const { Box, Text, Pressable } = usePrimitives()
   return (
-    <Box flexDirection="row" gap={2} style={{ flexWrap: 'wrap' }}>
+    <Box flexDirection="row" gap={2} flexWrap="wrap">
       {options.map(opt => (
-        <button
-          key={opt}
-          type="button"
-          onClick={() => onChange(opt)}
-          style={{
-            padding: '6px 16px',
-            borderRadius: 8,
-            border: '2px solid',
-            borderColor: value === opt ? 'var(--color-primary-default, #0376c9)' : 'var(--color-border-default, #bbc0c5)',
-            backgroundColor: value === opt ? 'var(--color-primary-muted, #e7f0f9)' : 'transparent',
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-            fontSize: 14,
-          }}
-        >
-          <Text variant="bodySm">{opt}</Text>
-        </button>
+        <Pressable key={opt} onPress={() => onChange(opt)}>
+          <Box
+            paddingVertical={2}
+            paddingHorizontal={4}
+            borderRadius={8}
+            borderWidth={2}
+            borderColor={value === opt ? 'primary' : 'default'}
+            backgroundColor={value === opt ? 'primaryMuted' : undefined}
+          >
+            <Text variant="bodySm">{opt}</Text>
+          </Box>
+        </Pressable>
       ))}
     </Box>
   )
@@ -228,26 +216,14 @@ function SliderEditor({
 }
 
 function TextEditor({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const { TextInput } = usePrimitives()
   return (
-    <input
-      type="text"
-      value={value}
-      onChange={e => onChange(e.target.value)}
-      style={{
-        padding: '8px 12px',
-        borderRadius: 8,
-        border: '2px solid var(--color-border-default, #bbc0c5)',
-        fontFamily: 'inherit',
-        fontSize: 14,
-        width: '100%',
-        boxSizing: 'border-box',
-      }}
-    />
+    <TextInput value={value} onChangeText={onChange} />
   )
 }
 
 function ColorEditor({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const { Box } = usePrimitives()
+  const { Box, TextInput } = usePrimitives()
   return (
     <Box flexDirection="row" gap={2} alignItems="center">
       <input
@@ -256,19 +232,9 @@ function ColorEditor({ value, onChange }: { value: string; onChange: (v: string)
         onChange={e => onChange(e.target.value)}
         style={{ width: 40, height: 40, borderRadius: 8, border: 'none', cursor: 'pointer' }}
       />
-      <input
-        type="text"
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        style={{
-          padding: '8px 12px',
-          borderRadius: 8,
-          border: '2px solid var(--color-border-default, #bbc0c5)',
-          fontFamily: 'ui-monospace, monospace',
-          fontSize: 14,
-          flex: 1,
-        }}
-      />
+      <Box flex={1}>
+        <TextInput value={value} onChangeText={onChange} />
+      </Box>
     </Box>
   )
 }

@@ -74,7 +74,7 @@ export function Input({
         </Text>
       )}
 
-      <Box style={{ position: 'relative' }}>
+      <Box position="relative">
         <TextInput
           value={value}
           onChangeText={handleChange}
@@ -87,12 +87,10 @@ export function Input({
         />
         {endAdornment && (
           <Box
-            style={{
-              position: 'absolute',
-              right: 8,
-              top: '50%',
-              transform: [{ translateY: -12 }],
-            }}
+            position="absolute"
+            right={8}
+            top="50%"
+            style={{ transform: [{ translateY: -12 }] }}
           >
             {endAdornment}
           </Box>

@@ -25,7 +25,7 @@ export function TransferStatus({ result, onDismiss }: TransferStatusProps) {
       borderWidth={2}
       borderColor={isSuccess ? 'success' : 'error'}
     >
-      <Box flexDirection="column" gap={1} style={{ flex: 1 }}>
+      <Box flexDirection="column" gap={1} flex={1}>
         <Text
           variant="bodyMd"
           fontWeight="medium"

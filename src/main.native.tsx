@@ -18,6 +18,7 @@ import { registerRootComponent } from 'expo'
 import { SafeAreaView, StatusBar, Platform } from 'react-native'
 import { AdapterProvider } from './adapters/AdapterContext'
 import { nativeAdapter } from './adapters/native'
+import { lightTheme, darkTheme } from './adapters/tokens.native'
 import { ThemeProvider, useTheme } from './theme/useTheme'
 import { EnvironmentProvider, createEnvironment } from './environment'
 import { FeatureFlagsProvider } from './features'
@@ -33,9 +34,10 @@ const environment = createEnvironment(
 
 function ThemedApp() {
   const { isDark } = useTheme()
+  const tokens = isDark ? darkTheme : lightTheme
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: isDark ? '#121314' : '#f3f5f9' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: tokens.colors.background.alternative }}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
       <FeatureFlagsProvider>
         <ServicesProvider services={defaultServices}>

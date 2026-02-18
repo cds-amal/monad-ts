@@ -79,6 +79,18 @@ const borderColorMap: Record<BorderColor, BoxBorderColor> = {
   transparent: BoxBorderColor.Transparent,
 }
 
+// Map adapter border colors to CSS custom properties (for directional borders passed via style)
+const borderColorCSSMap: Record<BorderColor, string> = {
+  default: 'var(--color-border-default)',
+  muted: 'var(--color-border-muted)',
+  primary: 'var(--color-primary-default)',
+  error: 'var(--color-error-default)',
+  success: 'var(--color-success-default)',
+  warning: 'var(--color-warning-default)',
+  info: 'var(--color-info-default)',
+  transparent: 'transparent',
+}
+
 // Map adapter button variants to MDS ButtonVariant
 const buttonVariantMap: Record<AdapterButtonVariant, ButtonVariant> = {
   primary: ButtonVariant.Primary,
@@ -135,6 +147,7 @@ export const webAdapter: UIAdapter = {
     marginVertical,
     marginHorizontal,
     marginBottom,
+    marginTop,
     flexDirection,
     alignItems,
     justifyContent,
@@ -143,14 +156,58 @@ export const webAdapter: UIAdapter = {
     borderColor,
     borderRadius,
     onPress,
+    position,
+    top,
+    right,
+    bottom,
+    left,
+    zIndex,
+    flex,
+    flexWrap,
+    flexGrow,
+    width,
+    height,
+    maxWidth,
+    minWidth,
+    maxHeight,
+    minHeight,
+    overflow,
+    opacity,
+    borderBottomWidth,
+    borderBottomColor,
+    borderTopWidth,
+    borderTopColor,
   }: BoxProps) {
+    const extraStyle: React.CSSProperties = {
+      ...(borderRadius && { borderRadius }),
+      ...(position && { position }),
+      ...(top !== undefined && { top }),
+      ...(right !== undefined && { right }),
+      ...(bottom !== undefined && { bottom }),
+      ...(left !== undefined && { left }),
+      ...(zIndex !== undefined && { zIndex }),
+      ...(flex !== undefined && { flex }),
+      ...(flexWrap && { flexWrap }),
+      ...(flexGrow !== undefined && { flexGrow }),
+      ...(width !== undefined && { width }),
+      ...(height !== undefined && { height }),
+      ...(maxWidth !== undefined && { maxWidth }),
+      ...(minWidth !== undefined && { minWidth }),
+      ...(maxHeight !== undefined && { maxHeight }),
+      ...(minHeight !== undefined && { minHeight }),
+      ...(overflow && { overflow }),
+      ...(opacity !== undefined && { opacity }),
+      ...(borderBottomWidth !== undefined && { borderBottomWidth }),
+      ...(borderBottomColor && { borderBottomColor: borderColorCSSMap[borderBottomColor] }),
+      ...(borderTopWidth !== undefined && { borderTopWidth }),
+      ...(borderTopColor && { borderTopColor: borderColorCSSMap[borderTopColor] }),
+      ...style as React.CSSProperties,
+    }
+
     const content = (
       <MDSBox
         className={className}
-        style={{
-          ...(borderRadius && { borderRadius }),
-          ...style as React.CSSProperties,
-        }}
+        style={extraStyle}
         gap={gap as never}
         padding={padding as never}
         paddingVertical={paddingVertical as never}
@@ -159,6 +216,7 @@ export const webAdapter: UIAdapter = {
         marginVertical={marginVertical as never}
         marginHorizontal={marginHorizontal as never}
         marginBottom={marginBottom as never}
+        marginTop={marginTop as never}
         flexDirection={flexDirection as never}
         alignItems={alignItems as never}
         justifyContent={justifyContent as never}
@@ -176,7 +234,7 @@ export const webAdapter: UIAdapter = {
     return content
   },
 
-  Text: function Text({ children, style, className, variant = 'bodyMd', color, fontWeight, fontFamily }: TextProps) {
+  Text: function Text({ children, style, className, variant = 'bodyMd', color, fontWeight, fontFamily, textAlign }: TextProps) {
     // MDS doesn't have a monospace font family, so we use inline style
     const monoStyle = fontFamily === 'mono' ? { fontFamily: 'ui-monospace, monospace' } : {}
     return (
@@ -185,7 +243,7 @@ export const webAdapter: UIAdapter = {
         variant={textVariantMap[variant]}
         color={color ? textColorMap[color] : undefined}
         fontWeight={fontWeight ? fontWeightMap[fontWeight] : undefined}
-        style={{ ...monoStyle, ...style as React.CSSProperties }}
+        style={{ ...monoStyle, ...(textAlign && { textAlign }), ...style as React.CSSProperties }}
       >
         {children}
       </MDSText>

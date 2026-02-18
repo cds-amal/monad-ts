@@ -40,7 +40,7 @@ export function FlaggedAddressTooltip({ address, onDismiss }: FlaggedAddressTool
   if (!details) return null
 
   return (
-    <Box style={{ position: 'relative', display: 'inline-flex' }}>
+    <Box position="relative" style={{ display: 'inline-flex' }}>
       <Pressable
         onPress={() => setShowDetails(!showDetails)}
         style={{
@@ -58,15 +58,13 @@ export function FlaggedAddressTooltip({ address, onDismiss }: FlaggedAddressTool
       {showDetails && (
         <div ref={tooltipRef}>
           <Box
-            style={{
-              position: 'absolute',
-              top: '100%',
-              left: 0,
-              marginTop: 4,
-              zIndex: 1000,
-              minWidth: 240,
-              maxWidth: 320,
-            }}
+            position="absolute"
+            top="100%"
+            left={0}
+            marginTop={1}
+            zIndex={1000}
+            minWidth={240}
+            maxWidth={320}
             backgroundColor="default"
             borderWidth={1}
             borderColor="muted"
