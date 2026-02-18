@@ -5,8 +5,8 @@ React TypeScript app for evaluating monadic design system patterns. Uses mock We
 ## Setup
 
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 ## Structure
