@@ -286,6 +286,14 @@ Both export the same async interface: `loadOverrides()`, `saveOverrides()`, `cle
 
 This is the "overhead" from Tasks A through D paying off: the `.native.ts` file pattern, the async-compatible context initialization, the bundler resolution. All infrastructure that was already in place.
 
+#### Tooling Gotcha: Metro Cache and `.native` File Resolution
+
+One more friction point worth documenting. After creating the `.native.tsx` files, the iOS build still crashed with the same `div` error. Turns out Metro (React Native's bundler) caches module resolution. When `ConfigDialog.native.tsx` was created while Metro was already running, Metro had already resolved `./ConfigDialog` to `ConfigDialog.tsx` (the web version) and cached that mapping. Hot reload picks up file *changes*, but it doesn't re-evaluate which file an import should resolve to when a new platform-specific variant appears.
+
+The fix: restart Metro with `--clear` to flush the module resolution cache. We ended up adding `--clear` to the `ios` and `android` scripts in `package.json` as a default, because this gotcha bites you every time you add a new `.native` file mid-session.
+
+This is a tooling cost of the `.native.tsx` convention. The pattern itself is correct (zero-config platform splitting, tree-shakeable, bundler handles routing), but the build tool has a sharp edge: its cache doesn't expect new files to change how an existing import resolves. In practice this means the first time you add a `.native` variant of an existing module, you need to restart the bundler. Not a dealbreaker, but surprising enough to burn 10 minutes the first time you hit it.
+
 #### Updated Provider Stack
 
 ```typescript
