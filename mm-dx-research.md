@@ -102,19 +102,24 @@ A few things stand out:
 
 Here's the thing nobody tells you about "move fast" architectures. We can measure this in commits, not calendar time, because both branches worked through the same task sequence:
 
+```mermaid
+xychart-beta
+    title "Cumulative Features Shipped"
+    x-axis ["A: Input", "B: Refactor", "C: Dark Mode", "D: iOS", "E: Flags", "F: Config"]
+    y-axis "Features Delivered" 0 --> 7
+    line "Functional" [1, 2, 3, 4, 5, 6]
+    line "Imperative" [1, 2, 3, 3, 3, 3]
+```
+
+The Y-axis is cumulative features shipped: the thing PMs and EMs actually track. Both branches worked through the same backlog. The imperative line doesn't crash; it flatlines. That's arguably worse than a cliff: a cliff implies something broke, a flatline implies the approach simply ran out of runway.
+
 ```
                 Task A    Task B    Task C    Task D    Task E    Task F
 Functional:     Input     Dropdown  DarkMode  iOS ✅    Flags ✅   Config ✅
 Imperative:     Input     Refactor  DarkMode  iOS ❌    —         —
 ```
 
-```
-Functional:  [Slower]──────[Match]──────[Faster]──────[Compounding]──→
-Imperative:  [Faster]──────[Match]──────[Wall]
-             Commit 1      Commit 3     Commit 4+
-```
-
-The crossover happens around the 4th feature commit. Tasks A through C, both branches deliver (imperative faster). At Task D (cross-platform), imperative produces a document explaining why it can't; functional produces a working iOS app. Tasks E and F don't exist on the imperative branch at all.
+The crossover happens at the 4th feature commit. Tasks A through C, both branches deliver (imperative faster). At Task D (cross-platform), imperative produces a document explaining why it can't; functional produces a working iOS app. Tasks E and F don't exist on the imperative branch at all.
 
 After the crossover, functional patterns compound while imperative patterns accumulate debt. Each new feature on the functional branch reuses infrastructure that's already paid for (adapters, contexts, `.native.tsx` resolution). Each new feature on the imperative branch would require retrofitting that infrastructure first.
 
