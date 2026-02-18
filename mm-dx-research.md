@@ -117,6 +117,10 @@ xychart-beta
     line "Imperative" [1, 2, 3, 3, 3, 3]
 ```
 
+> **Green:** Functional (keeps shipping; infrastructure compounds with each feature)
+>
+> **Red:** Imperative (stalled at feature 4; requesting budget to retrofit architecture)
+
 The Y-axis is cumulative features shipped: the thing PMs and EMs actually track. Both branches worked through the same backlog. The imperative line doesn't crash; it flatlines. That's arguably worse than a cliff: a cliff implies something broke, a flatline implies the approach simply ran out of runway.
 
 ```
