@@ -51,7 +51,6 @@ pnpm run dev
 
 For iOS (on mm-monad branches):
 ```bash
-cd ios && pod install && cd ..
 pnpm run native:ios
 ```
 
