@@ -1,37 +1,25 @@
----
-preset: minimal
----
-
-## Bridging Design-Engineering Friction in the Age of AI
+# Bridging Design-Engineering Friction in the Age of AI
 
 A composable adapter experiment with the MetaMask Design System
 
-----
+<!-- end_slide -->
 
 # The Friction
 
 Design and engineering teams move at different velocities. AI amplifies the gap.
 
 | What Happens | The Impact |
-|--------------|------------|
-| AI generates 10 new components | 10 components with inline styles, arbitrary|
-|                                | colors |
-| | |
+|---|---|
+| AI generates 10 new components | 10 components with inline styles, arbitrary colors |
 | Design team updates brand colors | Manual audit of all AI-generated code |
-| | |
 | Add dark mode | Rewrite every AI-generated component |
-| | |
-| New developer uses AI assistance | Generates code that passes review but|
-|                                  | violates patterns |
-| | |
-| After 6 months | Mix of design system + inline styles,|
-|                | inconsistent |
-| | |
+| New developer uses AI assistance | Generates code that passes review but violates patterns |
+| After 6 months | Mix of design system + inline styles, inconsistent |
 
 Design reviews become the bottleneck. Design teams can't scale code review.
 The "right thing" is socially enforced (PR comments) instead of structurally enforced.
 
-----
+<!-- end_slide -->
 
 # What AI Generates vs What Design Wants
 
@@ -79,7 +67,7 @@ function WalletButton({ onClick, isLoading }: Props) {
 
 Native `<button>`, inline styles, hardcoded `#3b82f6`, no a11y, no loading/disabled, doesn't theme.
 
-----
+<!-- end_slide -->
 
 # The Hypothesis
 
@@ -101,7 +89,7 @@ We get: the type system enforces it; the adapter maps intent to platform-correct
 
 Express **intent**, not **implementation**.
 
-----
+<!-- end_slide -->
 
 # Study Design
 
@@ -110,19 +98,19 @@ Express **intent**, not **implementation**.
 Two research tracks ran in parallel:
 
 | | Functional (mm-monad) | Imperative (mm-imperative) |
-|---|---------------------|----------------------------|
+|---|---|---|
 | Architecture | Adapter layer + contexts + pure functions | Direct component code |
 | Tasks completed | A through G (all 7) | A through C (stalled at D) |
 | Branches | mm-monad_01 through mm-monad_05 | mm-imperative_01 |
 
 Same design system. Same requirements. Same AI tooling. Different architecture.
 
-----
+<!-- end_slide -->
 
 # The Tasks at a Glance
 
 | Task | What We Did | Functional | Imperative |
-|------|-------------|------------|------------|
+|---|---|---|---|
 | **A**: Input | Reusable validated input | `ValidationResult.chain()` | Inline `getError()` |
 | **B**: Refactor | Simplify 133-line component | 65 LOC + generic Dropdown | 108 LOC, no reuse |
 | **C**: Dark Mode | Theme switching with tokens | Pure `ThemeOps` module | Simple hook (coupled) |
@@ -131,7 +119,7 @@ Same design system. Same requirements. Same AI tooling. Different architecture.
 | **F**: Config | Runtime UI configuration | 849 LOC (adapter bypass story) | N/A |
 | **G**: DS Gaps | Close escape hatches | 3 logic files, 12 mechanical | N/A |
 
-----
+<!-- end_slide -->
 
 # The Numbers
 
@@ -155,7 +143,7 @@ Same design system. Same requirements. Same AI tooling. Different architecture.
 | F: Config | 849 | 215 | 351 | 283 |
 | G: DS Gaps | 140 | 55 | 60 | 45 |
 
-----
+<!-- end_slide -->
 
 # The Velocity Crossover
 
@@ -185,7 +173,7 @@ Shipped  │
 
 Not a cliff (nothing broke). A flatline (the approach ran out of runway).
 
-----
+<!-- end_slide -->
 
 # Cross-Platform Comes Free, or Requires a Rewrite
 
@@ -211,7 +199,7 @@ The imperative audit found: **150+ DOM elements** needing replacement,
 **40+ CSS instances** incompatible, **20+ events** needing translation.
 Every component file requires modification.
 
-----
+<!-- end_slide -->
 
 # Architecture Only Works If You Use It
 
@@ -236,7 +224,7 @@ directly. That's not a discipline problem; it's an architecture problem.
 The fix: platform-specific files for dialog, gestures, and persistence.
 Expand the adapter, don't bypass it.
 
-----
+<!-- end_slide -->
 
 # Adapter Surface = Guideline Enforceability
 
@@ -264,7 +252,7 @@ doing exactly what it's designed to do.
 Before Task G: **~60%** of layout needed escape hatches.
 After: **~95%** expressible via adapter props.
 
-----
+<!-- end_slide -->
 
 # Design Directives Propagate Structurally, Not Socially
 
@@ -290,7 +278,7 @@ The structural version is permanent.
 | Durability | Drifts over sprints | Permanent |
 | AI compliance | Can't enforce | Constrained by adapter surface |
 
-----
+<!-- end_slide -->
 
 # The Documentation Stack
 
@@ -318,7 +306,7 @@ Task G validated **all three are necessary**:
 | Zero drift at 6 months | Unlikely: hatches accumulate | Remaining 7 cases documented |
 | New dev + AI = compliant | Unenforceable for layout | Guidelines match adapter surface |
 
-----
+<!-- end_slide -->
 
 # Testing Scorecard
 
@@ -340,7 +328,7 @@ at enterprise timescales.
 would require 500+ lines of scattered conditionals and an architectural
 rewrite in the imperative approach.
 
-----
+<!-- end_slide -->
 
 # When to Use Which
 
@@ -364,7 +352,7 @@ rewrite in the imperative approach.
 The question isn't "which is better."
 It's "which cost structure matches your timeline."
 
-----
+<!-- end_slide -->
 
 # The Bottom Line
 
@@ -384,7 +372,7 @@ It's "which cost structure matches your timeline."
 4. You have more than 4 features on the roadmap
 5. You care about what the codebase looks like in 6 months, not just today
 
-----
+<!-- end_slide -->
 
 # Thank You
 
