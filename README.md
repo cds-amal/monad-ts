@@ -199,3 +199,19 @@ The research is split into two companion documents:
 **[mm-dx-findings.md](./mm-dx-findings.md)** (~270 lines): the argument. Organized around insights, not chronology. Covers the thesis, the numbers, the velocity crossover, six key insights, and recommendations. Reads in about 10 minutes.
 
 **[mm-dx-research.md](./mm-dx-research.md)** (~950 lines): the evidence journal. Per-task implementation details, code samples, architecture deep-dives, and raw data tables. Cross-referenced from the findings doc for readers who want the proof.
+
+---
+
+## Slide Deck
+
+**[slides.md](./slides.md)**: a 17-slide summary of the research, built for [Kyma](https://www.kyma.ink/) (a terminal-based presentation tool). Covers the problem, the experiment, key insights, and recommendations.
+
+To present:
+
+```bash
+# Install Kyma (Go required)
+go install github.com/kyma-ink/kyma@latest
+
+# Run the deck
+kyma slides.md
+```
