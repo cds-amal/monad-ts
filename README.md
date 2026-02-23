@@ -204,14 +204,21 @@ The research is split into two companion documents:
 
 ## Slide Deck
 
-**[slides.md](./slides.md)**: a 17-slide summary of the research, built for [Kyma](https://www.kyma.ink/) (a terminal-based presentation tool). Covers the problem, the experiment, key insights, and recommendations.
+Two versions of the same deck, targeting different terminal presentation tools:
+
+| File | Tool |
+|------|------|
+| [`slides.md`](./slides.md) | [Kyma](https://www.kyma.ink/) |
+| [`slides.pterm.md`](./slides.pterm.md) | [presenterm](https://github.com/mfontanini/presenterm) |
 
 To present:
 
 ```bash
-# Install Kyma (Go required)
+# Kyma (requires Go)
 go install github.com/kyma-ink/kyma@latest
-
-# Run the deck
 kyma slides.md
+
+# presenterm (macOS)
+brew install presenterm
+presenterm slides.pterm.md
 ```
