@@ -342,6 +342,35 @@ rewrite in the imperative approach.
 
 ----
 
+# A/B Testing as Composition, Not Conditionals
+
+Shipping features is half the job. **Learning which features matter** is the other half.
+
+The provider stack already has everything you need for experimentation:
+
+| What A/B Testing Needs | What's Already Built |
+|---|---|
+| Gate a feature per user/cohort | `FeatureFlagsProvider` (Task E) |
+| Different UI per variant | Adapter layer (Task D) |
+| Tweak behavior without redeploying | Runtime config system (Task F) |
+| Run experiments on both platforms | Same flag works web + iOS |
+| Clean up the losing variant | Remove isolated code, not scattered conditionals |
+
+**Functional:** an A/B test is a provider composition. Wrap a cohort with
+different flags; the rest of the stack (adapters, services, components)
+just works. Both variants get cross-platform support for free.
+
+**Imperative:** an A/B test is `if (variant === 'B')` sprinkled through
+component files. Each conditional is a cleanup liability. Cross-platform
+experiments are basically impossible without the adapter layer.
+
+**The PMF connection:** when you're searching for product-market fit,
+experimentation velocity matters as much as feature velocity. The functional
+model doesn't just ship features faster after the crossover; it lets you
+test *which features to keep*.
+
+----
+
 # When to Use Which
 
 **Functional (adapter layer) makes sense when:**
@@ -372,17 +401,19 @@ It's "which cost structure matches your timeline."
 |---|---|---|
 | Add new platform | Add adapter file | Rewrite architecture |
 | Add feature flag | Add to interface | Retrofit flag system |
+| A/B test a feature | Compose different providers per cohort | Scatter conditionals through components |
 | Swap service impl | Change provider | Hunt direct imports |
 | Test component | Mock contexts | Mock modules |
 | Absorb design directive | Expand adapter types (3 files) | Code review comments (drift) |
 
-**Five conditions that favor the functional approach:**
+**Six conditions that favor the functional approach:**
 
 1. You need (or will need) more than one platform
 2. Your design system team ships directives faster than your eng team absorbs them
 3. You're using AI tools to generate UI code
 4. You have more than 4 features on the roadmap
-5. You care about what the codebase looks like in 6 months, not just today
+5. You're searching for PMF and need constant experimentation
+6. You care about what the codebase looks like in 6 months, not just today
 
 ----
 

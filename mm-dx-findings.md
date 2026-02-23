@@ -204,6 +204,8 @@ We evaluated both approaches against four properties that characterize effective
 - Feature flagging or A/B testing is needed
 - Design system team ships directives that need to propagate across a codebase
 
+**The PMF angle:** if you're still searching for product-market fit, the functional model turns A/B testing into a composition problem. Feature flags (Task E) gate which variant renders, the adapter layer (Task D) ensures both variants work cross-platform, and the runtime config system (Task F) lets you tweak behavior without redeployment. An experiment is a different provider composition per cohort; cleanup is removing the losing variant's isolated code, not hunting scattered conditionals. Experimentation velocity matters as much as feature velocity when you're still learning which features to keep.
+
 ### When Imperative Makes Sense
 
 - Single-platform, web-only application
